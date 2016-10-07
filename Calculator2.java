@@ -4,21 +4,22 @@ import java.awt.GridLayout;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;  
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
 import java.awt.Checkbox;
 import java.awt.CheckboxGroup;
 import javax.swing.JButton;  
 import javax.swing.JFrame;  
 import javax.swing.JPanel;  
 import javax.swing.JTextField; 
-import javax.swing.JCheckBox; 
 import java.math.BigDecimal; //引入大数类 
 import java.util.Collections;
 import java.util.Stack;
-//import java.util.Scanner;//
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.lang.NumberFormatException;
 import java.lang.String;
+import java.awt.event.FocusListener;
+
  
 /** 
  * 一个计算器，支持简单的计算
@@ -26,22 +27,20 @@ import java.lang.String;
 public class Calculator2 extends JFrame implements ActionListener {  
 	/***************************************************************************************************************/
 	/********计算器相关按键名称及按钮设置*******/
-
-	
-/********计算器相关按键名称及按钮设置*******/
 	
 	/*计算器模式的切换的名称显示*/
-    private final String[] MODEL = {"简单型","科学型","统计型","健康管理","汇率转换"};
+    private final String[] MODEL = {"简单型","科学型","统计型","健康工具","汇率转换"};
     /*基础计算器上的键的显示名字 */  
     private final String[] KEYS = {"(",")", "C","←","7", "8", "9", "+" , "4", "5", "6",  
             "-", "1", "2", "3", "*", "0", ".", "=", "," }; 
     /*科学型计算器上的函数图标显示名称*/ 
-    private final String[] FUNCTION = { "1/x", "x^2", "x^y", "x!", "√" ,"%",
-    		"sin","cos","tan","In","lg","log","e^x","e","π",","};
+    private final String[] FUNCTION = { "1/x", "χ2", "x^y", "x!", "sin","cos","tan","√" ,
+    		"In","lg","log","%","e^x","e","π",","};
     /*统计型计算器上特殊功能图标显示名称*/
-    private final String[] SPECIAL_FUNTION = { "C(N,M)", "A(N,M)","D", "Ave" };
+    private final String[] SPECIAL_FUNTION = { "C(N,M)", "A(N,M)","D", "Ave","二项分布",
+    		"泊松分布","标准正太分布","离散系数"};
     /*健康管理计算器上的键的显示名称*/
-    private final String[] SUPPLEMENT={"BMI","BFR","寿命"};
+    private final String[] SUPPLEMENT={"体重指数","体质率","寿命"};
     /*汇率转换模块上的键的显示名称*/
     private final String[] REFRESH={"刷新"};
  
@@ -88,6 +87,11 @@ public class Calculator2 extends JFrame implements ActionListener {
     //设置单选框，以方便选择男女
     Checkbox cRadio1,cRadio2;
     CheckboxGroup c;
+    //设置几个String类型的变量，在焦点没有聚集在相应文本框上时的默认显示
+    String info1="请输入你的身高(米)";
+    String info2="请输入你的体重(千克)";
+    String info3="请输入你的腰围";
+    String info4="请输入你的年龄(岁)";
     
     /*为了实现科学计算及其他多个数据输入*/
     private double  baseNum = 1;    //保存计算x^y时x的值
@@ -96,7 +100,6 @@ public class Calculator2 extends JFrame implements ActionListener {
     private boolean isSpecialFunction = false;   //是否是统计计算
     private String   opreator = ""; //存放科学计算时的操作符 
     private Stack<String> numStack  = new Stack<String>();//存放输入的多个操作数
-
     
    /** 
     ************ 构造函数 *************************************************************************
@@ -114,11 +117,13 @@ public class Calculator2 extends JFrame implements ActionListener {
         this.setResizable(true);             //注意：如果大小可以改变 
         // 使计算器中各组件大小合适  
         this.setSize(600, 300); 
-    }  
+    }
   
     /** 
      *******初始化计算器 ***************************************************************************************** 
-     */  
+     *计算器的基本布局
+     */ 
+    
     private void init() {   	
         // 文本框中的内容采用右对齐方式  
         resultText.setHorizontalAlignment(JTextField.RIGHT);  
@@ -219,7 +224,7 @@ public class Calculator2 extends JFrame implements ActionListener {
         // 初始化计算器特殊函数功能键，用红色标示，将基本函数功能键放在一个画板内  
         JPanel special_functionsPanel = new JPanel();  
         // 用网格布局管理器，6行，4列的网格，网格之间的水平方向间隔为0个象素，垂直方向间隔为0个象素  
-        special_functionsPanel.setLayout(new GridLayout(6, 4, 0, 0)); 
+        special_functionsPanel.setLayout(new GridLayout(7, 4, 0, 0)); 
         //加入统计运算的功能按钮
         for (int i = 0; i < special_functionLen; i++) {  
         	special_function[i] = new JButton(SPECIAL_FUNTION[i]); 
@@ -261,13 +266,14 @@ public class Calculator2 extends JFrame implements ActionListener {
         	supplementPanel.add(supplements[i]);  
             supplements[i].setForeground(new Color(255,255,255));  
         }  
-        //设置单选框    
+        
+        //设置单选框 ，方便性别的选择 
         c=new CheckboxGroup();
         cRadio1=new Checkbox("男性",c,false);
         cRadio2=new Checkbox("女性",c,true);
-        //新建一个画板，将几个输入框放在里面
+        //新建一个画板，以网格布局，三行两列，将几个输入框放在里面
         JPanel panel_4=new JPanel();
-        panel_4.setLayout(new GridLayout(2,2));
+        panel_4.setLayout(new GridLayout(3,2));
         panel_4.add(heightText);
         panel_4.add(weightText);
         panel_4.add(waistText);
@@ -304,7 +310,7 @@ public class Calculator2 extends JFrame implements ActionListener {
         panel5.add("Center",refreshPanel);
         
         /***************为各按钮添加事件侦听器***********************************/   
-         //都使用同一个事件侦听器，即本对象。本类的声明中有implements ActionListener
+        //都使用同一个事件侦听器，即本对象。本类的声明中有implements ActionListener
         for (int i = 0; i < modelLen; i++) {  
             models[i].addActionListener(this);  
         }  
@@ -324,16 +330,26 @@ public class Calculator2 extends JFrame implements ActionListener {
         	refresh[i].addActionListener(this);  
         }
         
-        //计算器的整体布局 
-//        JPanel panelt=new JPanel(new GridLayout(2,1,0,0));
-//        add(panelt);
-//        panelt.setBackground(new Color(54,54,54   )); 
+        /*为文本框初始化*/
+        heightText.setText(info1);
+        weightText.setText(info2);
+        waistText.setText(info3);
+        ageText.setText(info4);
+        /*为文本框添加焦点事件相应器*/
+        heightText.addFocusListener(new MyFocusListener(info1, heightText));//添加焦点事件反映 
+        weightText.addFocusListener(new MyFocusListener(info2, weightText));
+        waistText.addFocusListener(new MyFocusListener(info3, waistText));//添加焦点事件反映 
+        ageText.addFocusListener(new MyFocusListener(info4, ageText));
+    
+        //新建一个画板panel,计算机的整体布局
         panel=new JPanel(new BorderLayout(0,0));
-        panel.setBackground(new Color(54,54,54   ));  
+        panel.setBackground(new Color(54,54,54));  
         add(panel);
         panel.add("North",top);
         panel.add("Center",panel1);  
-    }        
+    }    
+    
+
     /** 
      *********处理事件 *****************************************************************************************************
      */  
@@ -389,11 +405,14 @@ public class Calculator2 extends JFrame implements ActionListener {
         	    isFunction = false;   //是否是科学计算，如sin,cos,lg等
         	    opreator = "";
         	}else if(isSpecialFunction){
+        		
         		handleSpecialFunction(opreator);
         	    isSpecialFunction = false;   //是否是统计计算，如A（N,M）,C(N,M)等
         	    opreator = "";
         	}else{
     	      	result = calculate(resultText.getText());//计算结果
+     		    resultText.setText(resultText.getText()+"//ceshi4// "); 
+
     	      	resultText.setText(String.valueOf(result));//输出结果
         	}
 
@@ -403,21 +422,23 @@ public class Calculator2 extends JFrame implements ActionListener {
         }else if (label.equals(KEYS[3])) {  //用户按了“←”退回键，将文本框最后一个字符去掉
             handleBackspace();
         	
-        }else if ("0123456789.()+-*/,".indexOf(label) >= 0) {  // 用户按了输入要计算的表达式
+        }else if ("0123456789.()+-*/,eπ".indexOf(label) >= 0) {  // 用户按了输入要计算的表达式
         	if(isFunction||isSpecialFunction){           //如果是科学计算，如sin（），将输入的表达式存入一个字符串
         		expression = expression + label;
         	}
         	resultText.setText(resultText.getText()+label);
 
-        }else if(label.equals("1/x")||label.equals("x^2")||label.equals("x!")||label.equals("%")){//初步处理科学型计算器功能
+        }else if(label.equals(FUNCTION[0])||label.equals(FUNCTION[1])||label.equals(FUNCTION[3])||label.equals(FUNCTION[11])){//初步处理科学型计算器功能
             handleFunction(label);
             
-        }else if(label.equals("C(N,M)")||label.equals("A(N,M)")||    //如果是统计计算器，转入handleSpecialFunction（）
-        		label.equals("D")||label.equals("Ave")){
-        	if(label.equals("C(N,M)")){
+        }else if(label.equals(SPECIAL_FUNTION[0])||label.equals(SPECIAL_FUNTION[1])||    //如果是统计计算器，转入handleSpecialFunction（）
+        		label.equals(SPECIAL_FUNTION[2])||label.equals(SPECIAL_FUNTION[3])||
+        		label.equals(SPECIAL_FUNTION[4])||label.equals(SPECIAL_FUNTION[5])||
+        	    label.equals(SPECIAL_FUNTION[6])||label.equals(SPECIAL_FUNTION[7])){
+        	if(label.equals(SPECIAL_FUNTION[0])){
      		    resultText.setText("请分别输入n,m，并以”,“隔开                   C ( "); 
 
-        	}else if(label.equals("A(N,M)")){
+        	}else if(label.equals(SPECIAL_FUNTION[1])){
      		    resultText.setText("请分别输入n,m，并以”,“隔开                   A ( "); 
 
         	}else{
@@ -437,10 +458,11 @@ public class Calculator2 extends JFrame implements ActionListener {
         		baseNum = getNumberFromText();
         		resultText.setText(resultText.getText()+"^( ");
         	}else if(label.equals("log")){
-        		//baseNum = getNumberFromText();
         		
         		resultText.setText("请分别输入底数和自变量/真数  并以”，“隔开           "+"log"+"(   ");
-        	}else{
+        	}
+
+        	else{
         		resultText.setText(label+"( ");
         	}
         	
@@ -456,8 +478,9 @@ public class Calculator2 extends JFrame implements ActionListener {
         if (i > 0) {  
             // 退格，将文本最后一个字符去掉  
             text = text.substring(0, i - 1);  
+            expression = expression.substring(0, i - 1);
             if (text.length() == 0) {  
-                // 如果文本没有了内容，则初始化计算器的各种值  
+                // 如果文本没有了内容，则初始化计算器的各种值  y  
                 resultText.setText("");  
             } else {  
                 // 显示新的文本  
@@ -470,7 +493,14 @@ public class Calculator2 extends JFrame implements ActionListener {
         // 初始化计算器的各种值  
         resultText.setText(""); 
         isFunction = false;   
+        isSpecialFunction = false;   
 	    opreator = "";
+        baseNum = 1;    
+	    expression = "";
+	    numStack.clear();
+	    postfixStack.clear();
+	    opStack.clear();
+	    
         
     }
     /*****************************************************************************************************************/
@@ -494,23 +524,30 @@ public class Calculator2 extends JFrame implements ActionListener {
                  String tempResult  = calculate(firstValue, secondValue, currentValue.charAt(0));
                  resultStack.push(tempResult);
             }
+
         }
         return Double.valueOf(resultStack.pop());
     }
     /*
      * 数据准备阶段将表达式转换成为后缀式栈   @param expression
-     */
+     */ 
     private void prepare(String expression) {
         opStack.push(',');//运算符放入栈底元素逗号，此符号优先级最低
         char[] arr  = expression.toCharArray();
         int currentIndex  = 0;//当前字符的位置
         int count = 0;//上次算术运算符到本次算术运算符的字符的长度便于获得之间的数值
-        char currentOp  ,peekOp;//当前操作符和栈顶操作符
+        char currentOp = 'o'  ,peekOp;//当前操作符和栈顶操作符
         for(int i=0;i<arr.length;i++) {
             currentOp = arr[i];
             if(isOperator(currentOp)) {//如果当前字符是运算符
                 if(count > 0) {
-                    postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+                	if(count==1&&arr[currentIndex] =='e'){//如果操作数是 e，则将其转换成相应数值再推进栈中
+                		postfixStack.push(String.valueOf(Math.E));	
+                	}else if(count==1&&arr[currentIndex]=='π'){//如果操作是π ，则将其转换成相应数值再推进栈中
+                		postfixStack.push(String.valueOf(Math.PI));	
+                	}else{
+                        postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+                	} 
                 }
                 peekOp = opStack.peek();
                 if(currentOp == ')') {//遇到反括号则将运算符栈中的元素移除到后缀式栈中直到遇到左括号
@@ -532,7 +569,13 @@ public class Calculator2 extends JFrame implements ActionListener {
             }
         }
         if(count > 1 || (count == 1 && !isOperator(arr[currentIndex]))) {//最后一个字符不是括号或者其他运算符的则加入后缀式栈中
-            postfixStack.push(new String(arr,currentIndex,count));
+        	if(currentOp =='e'){//如果操作数是 e，则将其转换成相应数值再推进栈中
+        		postfixStack.push(String.valueOf(Math.E));	
+        	}else if(currentOp=='π'){//如果操作是π ，则将其转换成相应数值再推进栈中
+        		postfixStack.push(String.valueOf(Math.PI));	
+        	}else{
+                postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+        	}        
         } 
         
         while(opStack.peek() != ',') {
@@ -570,8 +613,12 @@ public class Calculator2 extends JFrame implements ActionListener {
      * @return
      */
     private String calculate(String firstValue,String secondValue,char currentOp) {
-    	double fV = Double.valueOf(firstValue).doubleValue();
-    	double sV = Double.valueOf(secondValue).doubleValue();
+    
+    	double fV =0.0;
+    	double sV =0.0;
+
+        fV = Double.valueOf(firstValue).doubleValue();
+        sV = Double.valueOf(secondValue).doubleValue();
         String result  = "";
         switch(currentOp) {
             case '+':
@@ -597,16 +644,7 @@ public class Calculator2 extends JFrame implements ActionListener {
      */  
     private void handleFunction(String key) { 
     	double resultNum = 0;  
-        if (key.equals("x!")) {  
-            // 阶乘运算  
-        	try{
-        		int num = Integer.parseInt(resultText.getText());
-        		resultNum = factorial(num);
-        	}catch(NumberFormatException e2){
-       		 	resultText.setText("请输入整数");
-        	} 
-        	
-        }else if(key.equals("1/x")){
+        if (key.equals(FUNCTION[0])) {  
         	//计算一个数的倒数
         	if(getNumberFromText()==0){   //判断要计算的数是否为零
         		resultText.setText("0没有倒数！");
@@ -614,74 +652,76 @@ public class Calculator2 extends JFrame implements ActionListener {
         		resultNum = 1/getNumberFromText();
         	}
         	
-        	
-        }else if(key.equals("x^2")){
+        }else if(key.equals(FUNCTION[1])){
         	//计算一个数的平方
         	resultNum = getNumberFromText()*getNumberFromText();
-        }else if (key.equals("%")){
-        	//取百分号运算
-        	resultNum = getNumberFromText()/100;  
+           
+        }else if(key.equals(FUNCTION[2])){
+        	//计算x的y次方 
+        	resultNum = calculate(expression);
+        	resultNum = Math.pow(baseNum,resultNum);
+        }
+        else if(key.equals(FUNCTION[3])){
+        	 // 阶乘运算  
+        	try{
+        		int num = Integer.parseInt(resultText.getText());
+        		resultNum = factorial(num);
+        	}catch(NumberFormatException e2){
+       		 	resultText.setText("请输入整数");
+        	} 
         	
-        }else if (key.equals("√")) {  
-            // 平方根运算  
+        }else if (key.equals(FUNCTION[4])){
+        	// 三角函数sin()
+        	resultNum = calculate(expression);
+        	resultNum = Math.sin(resultNum);
+        	
+        }else if (key.equals(FUNCTION[5])) {  
+        	 // 三角函数cos() 
+        	resultNum = calculate(expression);
+        	resultNum = Math.cos(resultNum); 
+        	
+        }else if (key.equals(FUNCTION[6])){
+        	 //三角函数tan()
+        	resultNum = calculate(expression);
+            resultNum = Math.tan(resultNum);
+        	
+        }else if (key.equals(FUNCTION[7])) {  
+        	// 平方根运算  
         	resultNum = calculate(expression);
         	if(resultNum<=0){
         		resultText.setText("you entered must be positive number");
             }else{
             	resultNum = Math.sqrt(resultNum);      	    	
         	}
-        	
-        }else if (key.equals("x^y")){
-        	//计算x的y次方 
-        	resultNum = calculate(expression);
-        	resultNum = Math.pow(baseNum,resultNum);
-        	
-        }else if (key.equals("sin")) {  
-            // 三角函数sin()
-        	resultNum = calculate(expression);
-        	resultNum = Math.sin(resultNum);
-        	
-        }else if (key.equals("cos")) {  
-            // 三角函数cos() 
-        	resultNum = calculate(expression);
-        	resultNum = Math.cos(resultNum); 
-        	 
-        }else if (key.equals("tan")) {  
-            //三角函数tan()
-        	resultNum = calculate(expression);
-            resultNum = Math.tan(resultNum); 
-            
-        }else if (key.equals("e^x")){
-        	//计算自然常数e的x次方
-        	resultNum = calculate(expression);
-       	    resultNum = Math.exp(resultNum);//显示有点问题
-       	    
-        }else if (key.equals("In")){
+                	
+        }else if (key.equals(FUNCTION[8])) {  
         	//计算自然对数
         	resultNum = calculate(expression);
         	resultNum = Log(Math.E,resultNum);
-        	
-        }else if (key.equals("lg")){
+        
+        }else if (key.equals(FUNCTION[9])) {  
         	//计算以10为底的对数
         	resultNum = calculate(expression);
         	resultNum = Log(10,resultNum);
-        	
-        }else if (key.equals("log")){
-        	//计算以10为底的对数
+        }else if (key.equals(FUNCTION[10])) {  
+        	//计算以任意为底的函数
         	getNumToken(expression);
         	resultNum = Double.valueOf(numStack.pop()).doubleValue();
         	baseNum = Double.valueOf(numStack.pop()).doubleValue();
         	resultNum =Log(baseNum,resultNum);
+
+            
+        }else if (key.equals(FUNCTION[11])){
+        	//取百分号运算
+        	resultNum = getNumberFromText()/100;  
         	
-        }else if (key.equals("e")){
-       	 //计算自然常数e
-       	 resultNum = Math.E;//显示有待改进
-       	 
-       }else if (key.equals("π")){
-       	 //计算圆周率 π
-       	 resultNum = Math.PI;//显示有点问题
-       	 
-       }
+        }else if (key.equals(FUNCTION[12])){
+        	//计算自然常数e的x次方
+        	resultNum = calculate(expression);
+       	    resultNum = Math.exp(resultNum);//显示有点问题
+        	
+        }
+
         
         
         resultText.setText(String.valueOf(resultNum));
@@ -689,27 +729,48 @@ public class Calculator2 extends JFrame implements ActionListener {
     
     }  
     
-    /*计算阶乘*/
+//  /*计算阶乘--原*/
+//    private void factorial(double factorial) {
+//    	if(factorial==0.0){
+//    		resultText.setText("0");
+//    	}else{
+//    	    int base=(int)factorial;
+//    	    String style="0.0";
+//    	    DecimalFormat df = new DecimalFormat();  
+//    	    style = "0.00000E000";  
+//    	    BigDecimal num=new BigDecimal(String.valueOf(factorial));//构造BigDecimal时指定有效精度s
+//            for(int i = 1; i <= base; i++){  
+//                String temp1 = Integer.toString(i);  
+//                BigDecimal temp2 = new  BigDecimal(temp1);  
+//                num = num.multiply(temp2);  
+//           } 
+//          df.  applyPattern(style);  
+//          resultText.setText(df.format(num));  
+//    	}
+//   }
+     /*计算阶乘--现*/
     private double factorial(int x) {
     	if(x==0){
     		return(1);
     	}else{
     		 
     	    String style="0.0";
-    	    DecimalFormat df = new DecimalFormat();  
-    	    style = "0.00000E000";  
+    	    DecimalFormat df = new DecimalFormat();     	     
     	    BigDecimal num=new BigDecimal(String.valueOf(x));//构造BigDecimal时指定有效精度s
-            for(int i = 1; i <= x; i++){  
+            for(int i = 1; i < x; i++){  
                 String temp1 = Integer.toString(i);  
                 BigDecimal temp2 = new  BigDecimal(temp1);  
                 num = num.multiply(temp2);  
            } 
            df.applyPattern(style);  
-           return(Double.valueOf(df.format(num)).doubleValue());  //将大数类转换成double型返回
+           return(Double.valueOf(df.format(num)));  //将大数类转换成double型返回
     	}
    }
  
-   /*计算对数log(x,y)*/
+    /** 
+     *计算以任意数为底的对数
+     * @param x,y 底数，真数
+     */
    private double Log(double x,double y){
     	
     	if(x<=0||y<=0){
@@ -729,48 +790,68 @@ public class Calculator2 extends JFrame implements ActionListener {
     * 统计型————实现统计计算器的功能
     * */
    private  void handleSpecialFunction(String label){
+	   
 	   String resultNum = "";  
 	   int n,m;
-
-	   if(label.equals("C(N,M)")){//计算组合数
-		   getNumToken(expression);
+	   getNumToken(expression);
+	   
+	   if(label.equals(SPECIAL_FUNTION[0])){//计算组合数
 	       m = Integer.valueOf(numStack.pop());
 	       n = Integer.valueOf(numStack.pop());
-	       resultNum =String.valueOf(C(n,m));
+	       resultNum =String.valueOf(Combination(n,m));
 		   
-	   }else if(label.equals("A(N,M)")){//计算排列数
-		   getNumToken(expression);
+	   }else if(label.equals(SPECIAL_FUNTION[1])){//计算排列数
 	       m = Integer.valueOf(numStack.pop());
 	       n = Integer.valueOf(numStack.pop());
-	       resultNum =String.valueOf(A(n,m));
+	       resultNum =String.valueOf(Arrangement(n,m));
 
-	   }else if(label.equals("D")){//计算方差
-//	    	int arrLen = arr.length;
-//		   for(int i=0;i<)
-	   }else{//计算平均值
+	   }else if(label.equals(SPECIAL_FUNTION[2])){//计算方差
+		   resultNum = String.valueOf(Variance());
+		   
+	   }else if(label.equals(SPECIAL_FUNTION[4])){//计算二项分布
+		   resultNum = String.valueOf(BiDistribution());
+	   }else if(label.equals(SPECIAL_FUNTION[5])){//计算泊松分布
+		   resultNum = String.valueOf(PoDistribution());
+	   }else if(label.equals(SPECIAL_FUNTION[6])){//计算标准正太分布
+		   StandardDistribution(resultText.getText());
+	   }else if(label.equals(SPECIAL_FUNTION[7])){//计算离散系数
+		   resultNum = String.valueOf(Discrete_index());
+	   }else{
 		   
 	   }
 	   
+       resultText.setText(resultText.getText()+" ) = "+resultNum);//输出计算结果
    } 
-   /*计算组合公式*/
-   private int C(int x,int y){
-   	
-	   	if(x<=0||y<=0){
+
+   /** 
+    * 计算组合公式 函数
+    * @param n,m
+    * @return 
+    */  
+  
+   private int Combination(int n,int m){
+	   
+	   if(n<=0||m<=0){
 	   		resultText.setText("your enter must be positive number");
 	   		return 0;
 	    }else{
-		    if(x>y){
+		    if(m>n){
 		  	    resultText.setText("x must be smaller than or equal to y");
 		  		return 0;
 		  	}else{
-			   	int c = (int)(factorial(y)/(factorial(x)*factorial(y-x)));
+			   	int c = (int)(factorial(n)/(factorial(m)*factorial(n-m)));
 			   	return (c);
 			}
 	    }
-   	
-   }
-   /*计算排列公式*/
-   private int A(int m,int n){
+  	
+  }
+
+   /** 
+    * 计算排列公式 函数
+    * @param n,m
+    * @return 
+    */  
+   private int Arrangement(int n,int m){
   		
     	if(n<=0||m<=0){
     		resultText.setText("your enter must be positive number");
@@ -780,35 +861,116 @@ public class Calculator2 extends JFrame implements ActionListener {
 	   		  resultText.setText("m must be smaller than or equal to n");
 	   		  return 0;
 	   	    }else{
-	    	  int a = (int)(factorial(n)/factorial(n-m));
+	    	  int a =(int) (factorial(n)/factorial(n-m));
 	    	  return (a);
 	        }
      }
    }
    /*计算平均值*/
-   private double Ave(int order[]){
-  	int l = order.length;
-  	int total=0,k=0;
-  	 for(int i=0;i<l;i++){
-  		 total += order[i]; 
-  		 k++;
+   private double Ave(){
+  	 double result=0,opNum = 0.0;
+  	 int numStackLen = numStack.size();
+  	 Stack<String> numstack  = (Stack<String>)numStack.clone();
+  	 for(int i=0;i<numStackLen;i++){
+   		 opNum =Double.valueOf(numstack.pop()) ;
+  		 result += opNum;
   	 }
-  	double a =(double)total/k;
-  	return a;
+  	result = result/numStackLen;
+  	return result;
   	
   }
    /*计算方差*/
-   private double D(int s[]){
-   	int l = s.length;
-   	double average=Ave(s);
-   	int total=0,k=0;
-   	 for(int i=0;i<l;i++){
-   		 total += (s[i]-average)*(s[i]-average); 
-   		 k++;
-   	 }
-   	double S =(double)total/k;
-   	return S;
+   private double Variance(){
+	   
+   	 double result=0,opNum = 0.0;
+   	 int    numStackLen = numStack.size();
+  	 Stack<String> numstack  = (Stack<String>)numStack.clone();
+   	 double average=Ave();
    	
+   	 for(int i=0;i<numStackLen;i++){
+   		 opNum =Double.valueOf(numstack.pop());
+   		result += (opNum-average)*(opNum-average); 
+   	 }
+   	result =result/numStackLen;
+   	return result;
+   	
+   }
+   /**
+    * 求二项分布的值
+    * @param n,p,k   实验n次，每次发生概率为p，发生次数为K
+    */
+   private double BiDistribution(){
+	   int n,k;
+	   double P;
+	   Stack<String> numstack  = (Stack<String>)numStack.clone();
+	   k=Integer.valueOf(numstack.pop());
+	   P=Double.valueOf(numstack.pop());
+	   n=Integer.valueOf(numstack.pop());
+	   System.out.println(n);
+	   P=Combination(n,k)*(Math.pow(P,k))*(Math.pow(1-P,(n-k)));
+	   return P;
+	
+   }
+   /**
+    * 求泊松分布的值
+    * @param λ,k   每次发生概率为λ，发生次数为K
+    */
+   private double PoDistribution(){
+	   int k;
+	   float λ;
+	   double p;
+	   Stack<String> numstack  = (Stack<String>)numStack.clone();
+	   k=Integer.valueOf(numstack.pop());
+	   λ=Float.valueOf(numstack.pop());
+	   p=(Math.pow(λ,k)*Math.pow(Math.E,-λ))/factorial(k);
+	   return p;
+	
+}
+   /**
+    * 求离散系数
+    */
+   private double Discrete_index(){ 
+	   double index;
+	   index=Math.sqrt(Variance())/Ave();
+	   return  index;
+   }
+   /**
+    * 标准正太分布函数
+    * 根据分割积分法来求得积分值
+    * -3.89～3.89区间外的积分面积 小于 0.0001，
+    * 所以确定有效的积分区间为-3.89～3.89
+    * 在实现分割的时候精度定为0.0001，得到的结果和查表得到的结果误差在-0.0002～+0.0002之间（已经检验）
+    * 
+    * @param u      积分上限
+    */
+   private  void StandardDistribution(String U){
+	   float u=Float.valueOf(U);
+       float ret  = 0;
+       if(u < -3.89){
+    	   resultText.setText("太小");
+       }
+       else if(u > 3.89){
+    	   resultText.setText("太小");
+       }
+       float temp = -3.89f;
+       while(temp <= u){
+           ret += 0.0001f * fx(temp);
+           temp += 0.0001f;
+       }
+       resultText.setText(ret+"");
+   }
+
+   /**
+    * 求被积函数的函数值    (1/(2 * PI)^(0.5))e^(-t^2/2)
+    * @param x      变量x
+    * @return       函数值
+    */
+   private static float fx(float x){
+       float ret = 0;
+       double a = 1.0 / Math.sqrt(Math.PI * 2);
+       a  = a * Math.pow(Math.E, -0.5 * Math.pow(x, 2));
+       ret = (float) a;
+       return ret;
    }
    /***********************************************************************************************/
    /***********************************************************************************************/
@@ -817,51 +979,85 @@ public class Calculator2 extends JFrame implements ActionListener {
     * */
    
    private void handleSupplement(String label){
-	   double weight,height,waistLine;
-	   int    age;
-	   
-	   weight = Double.valueOf(weightText.getText()); //从输入框中获得体重
-	   height = Double.valueOf(heightText.getText());//从输入框中获得身高
 
 	   if(label.equals("BMI")){
-		   BMI(weight,height);
+		   BMI();
 	   }else if(label.equals("BFR")){
-		   waistLine = Double.valueOf(waistText.getText());
-		   age = Integer.valueOf(ageText.getText());
-		   BFR(weight,height,waistLine,age);   
+		   BFR();
+  
 	   }
    }
    /*计算体重指数*/
-   private  void BMI(double weight,double height){
-	   	double bmi=weight/(height*height);
-	   	
-	   	if(bmi<19){
-	   		resultText.setText(bmi+"Underweight");
-	   	}else if(bmi>=19&&bmi<25){
-	   		resultText.setText(bmi+"Normalweight");
-	   	}else if(bmi>=25&&bmi<30){
-	   		resultText.setText(bmi+"Overweight");
-	   	}else if(bmi>=30&&bmi<39){
-	   		resultText.setText(bmi+"Obese");
-	   	}else{
-	   		resultText.setText(bmi+"Morbidly Obese");
-	   	}
+   private  void BMI(){
+	   double weight = 0,height = 0;
+	   //处理未输入数据的异常
+	   try {  
+    	   weight = Double.valueOf(weightText.getText()); //从输入框中获得体重
+    	   height = Double.valueOf(heightText.getText());//从输入框中获得身高
+       } catch (NumberFormatException e) { 
+	   		resultText.setText("亲，请先输入身高、体重哦！");
+
+       } 
+	   //计算BMI 的值
+	   double bmi=weight/(height*height);
+	   	//分等级输出
+	   	if(bmi<18.5){
+	   		resultText.setText(bmi+"体重过低");
+	   	}else if(bmi>=18.5&&bmi<23.9){
+	   		resultText.setText(bmi+"正常范围");
+	   	}else if(bmi>=23.9){
+	   		if(bmi>=23.9&&bmi<27.9){
+	   			resultText.setText(bmi+"肥胖前期");
+	   	    }else if(bmi>=27.9&&bmi<29.9){
+	   	    	resultText.setText(bmi+"I度肥胖");
+	   	    }else if(bmi>=29.9&&bmi<39.9){
+	   	    	resultText.setText(bmi+"II度肥胖");
+	   	    }else{
+	   	    	resultText.setText(bmi+"III度肥胖");
+	   	    }
+	   }
+	   
    }
    
    /*计算身体脂肪率*/
-   private  void BFR(double weight,double height,double waistline,int age){
-	   double bfr;
-    	if((c.getSelectedCheckbox())==cRadio1){//女生计算公式    //缺省
-    		double a=waistline*0.74;
-    		double b=weight*0.082+34.89;
-    		 bfr=(a-b)/weight;
-    	}else{//男生计算公式
-    		double a=waistline*0.74;
-    		double b=weight*0.082+44.74;
-    	    bfr=(a-b)/weight;
-    		
-    	}	
-    	resultText.setText(bfr+"");
+   private void BFR(){
+	   double weight = 0,height = 0;
+	   int    age = 0;
+	   double bfr,bmi;
+	   double dbw,bmr;//理想体重（DBW）:desirable body weight; 基础代谢率（BMR）:Basal metabolic rate
+	   double dailyCalorie;//每日所需卡路里
+	   int    sex = 0;//性别，女生为0，男生为1，默认是女生
+	   //处理未输入数据的异常
+	   try {  
+    	   
+    	   weight = Double.valueOf(weightText.getText()); //从输入框中获得体重
+    	   height = Double.valueOf(heightText.getText());//从输入框中获得身高
+    	  // waistLine = Double.valueOf(waistText.getText());
+		   age = Integer.valueOf(ageText.getText());
+       } catch (NumberFormatException e) { 
+	   		resultText.setText("亲，请先输入身高、体重、年龄等值哦！");
+
+       } 
+	   //判断性别
+	   if(!(c.getSelectedCheckbox()==cRadio1)){//如果不是女生，则置为1
+		   sex = 1;
+	   }
+	   //计算BMI
+	   bmi = weight/(height*height);
+	   //计算BFR
+       bfr = 1.2*bmi+0.23*age-5.4-10.8*sex; 
+       //计算理想体重
+       dbw = 22*height*height;
+       //计算基础代谢率
+       if(sex==1){
+    	   bmr = 661+9.6*weight+1.72*height-4.7*age ;  
+       }else{
+    	   bmr = 67+13.73*weight+5*height-6.9*age ;  
+       }
+      
+       //计算每日所需卡路里
+       //dailyCalorie = bmr*系数 ;
+       resultText.setText(bfr+"");
     }
    /***********************************************************************************************/
    
@@ -895,7 +1091,6 @@ public class Calculator2 extends JFrame implements ActionListener {
             } else {//如果当前字符是非数字的字符
             	if(count>0){
                     numStack.push(new String(arr,currentIndex,count));//取两个字符之间的数字
-
             	}
                 count = 0;
                 currentIndex = i+1;
@@ -913,7 +1108,27 @@ public class Calculator2 extends JFrame implements ActionListener {
         calculator.setVisible(true);  
         calculator.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);  
     }  
-}  
+} 
+
+class MyFocusListener implements FocusListener { 
+    String info; 
+    JTextField jtf; 
+    public MyFocusListener(String info, JTextField jtf) { 
+        this.info = info; 
+        this.jtf = jtf; 
+    } 
+    public void focusGained(FocusEvent e){//获得焦点的时候,清空提示文字 
+        String temp = jtf.getText(); 
+        if(temp.equals(info)){ 
+            jtf.setText(""); 
+        } 
+    } 
+    public void focusLost(FocusEvent e) {//失去焦点的时候,判断如果为空,就显示提示文字 
+        String temp = jtf.getText(); 
+        if(temp.equals("")){ 
+            jtf.setText(info); 
+        } 
+   }
 =======
 import java.awt.Color;  
 import java.awt.GridLayout;  
@@ -950,13 +1165,13 @@ public class Calculator2 extends JFrame implements ActionListener {
     private final String[] MODEL = {"简单型","科学型","统计型","健康管理","汇率转换"};
     /*基础计算器上的键的显示名字 */  
     private final String[] KEYS = {"(",")", "C","←","7", "8", "9", "+" , "4", "5", "6",  
-            "-", "1", "2", "3", "*", "0", ".", "=", "/" }; 
+            "-", "1", "2", "3", "*", "0", ".", "=", "," }; 
     /*科学型计算器上的函数图标显示名称*/ 
-    private final String[] FUNCTION = { "1/x", "x^2", "x^y", "x!", "sin","cos","tan","√" ,
+    private final String[] FUNCTION = { "1/x", "χ2", "x^y", "x!", "sin","cos","tan","√" ,
     		"In","lg","log","%","e^x","e","π",","};
     /*统计型计算器上特殊功能图标显示名称*/
     private final String[] SPECIAL_FUNTION = { "C(N,M)", "A(N,M)","D", "Ave","二项分布",
-    		"泊松分布","标准正太分布","卡方分布"};
+    		"泊松分布","标准正太分布","离散系数"};
     /*健康管理计算器上的键的显示名称*/
     private final String[] SUPPLEMENT={"体重指数","体质率","寿命"};
     /*汇率转换模块上的键的显示名称*/
@@ -1005,15 +1220,20 @@ public class Calculator2 extends JFrame implements ActionListener {
     //设置单选框，以方便选择男女,从而方便体重指数和体脂率
     Checkbox cRadio1,cRadio2;
     CheckboxGroup c;
-    double baseNum = 1;    //保存计算x^y时x的值
-    String   expression = ""; //存放科学计算时除去运算符的表达式。如计算sin（5+12*(3+5)/7）时，expression=5+12*(3+5)/7
-    boolean isFunction = false;   //是否是科学计算
-    String   opreator = "";
     //设置几个String类型的变量，在焦点没有聚集在相应文本框上时的默认显示
     String info1="请输入你的身高(米)";
     String info2="请输入你的体重(千克)";
     String info3="请输入你的腰围";
     String info4="请输入你的年龄(岁)";
+    /*为了实现科学计算及其他多个数据输入*/
+    private double  baseNum = 1;    //保存计算x^y时x的值
+    private String   expression = ""; //存放科学计算时除去运算符的表达式。如计算sin（5+12*(3+5)/7）时，expression=5+12*(3+5)/7
+    private boolean isFunction = false;   //是否是科学计算
+    private boolean isSpecialFunction = false;   //是否是统计计算
+    private String   opreator = ""; //存放科学计算时的操作符 
+    private Stack<String> numStack  = new Stack<String>();//存放输入的多个操作数
+
+    
     
    /** 
     ************ 构造函数 *************************************************************************
@@ -1268,11 +1488,11 @@ public class Calculator2 extends JFrame implements ActionListener {
      *********处理事件 *****************************************************************************************************
      */  
     public void actionPerformed(ActionEvent e) {  
-        // 承接最终计算结果  
+    	// 承接最终计算结果  
     	double result = 0.0;
     	// 获取事件源的标签  
         String label = e.getActionCommand();
-        //四种模式选择：简单型；科学型；统计型；健康管理型；汇率转换；
+        //四种模式选择：简单型；科学型；统计型；扩展型；
         if(label.equals(MODEL[0])){//简单型
         	panel.add("Center",panel1);
         	panel1.setVisible(true);
@@ -1313,35 +1533,55 @@ public class Calculator2 extends JFrame implements ActionListener {
         	panel4.setVisible(false);
         	panel5.setVisible(true);
         	handleC();     
-        } else if (label.equals("=")) {  // 用户按了"="键  ,输入结束，计算结果
+        }else if (label.equals("=")) {  // 用户按了"="键  ,输入结束，计算结果
         	if(isFunction){
         		handleFunction(opreator);
         	    isFunction = false;   //是否是科学计算，如sin,cos,lg等
         	    opreator = "";
+        	}else if(isSpecialFunction){
+        		
+        		handleSpecialFunction(opreator);
+        	    isSpecialFunction = false;   //是否是统计计算，如A（N,M）,C(N,M)等
+        	    opreator = "";
         	}else{
+
     	      	result = calculate(resultText.getText());//计算结果
     	      	resultText.setText(String.valueOf(result));//输出结果
         	}
 
         }else if (label.equals(KEYS[2])) { // 用户按了"C"键  ，初始化计算器
         	handleC();                     //将所有输入清空 
+        	
         }else if (label.equals(KEYS[3])) {  //用户按了“←”退回键，将文本框最后一个字符去掉
             handleBackspace();
-        }else if ("0123456789.()+-*/".indexOf(label) >= 0) {  // 用户按了输入要计算的表达式
-        	if(isFunction){           //如果是科学计算，如sin（），将输入的表达式存入一个字符串
+        	
+        }else if ("0123456789.()+-*/,eπ".indexOf(label) >= 0) {  // 用户按了输入要计算的表达式
+        	if(isFunction||isSpecialFunction){           //如果是科学计算，如sin（），将输入的表达式存入一个字符串
         		expression = expression + label;
         	}
         	resultText.setText(resultText.getText()+label);
 
         }else if(label.equals(FUNCTION[0])||label.equals(FUNCTION[1])||label.equals(FUNCTION[3])||label.equals(FUNCTION[11])){//初步处理科学型计算器功能
             handleFunction(label);
-        }else if(label.equals(SPECIAL_FUNTION[0])||label.equals(SPECIAL_FUNTION[1])||//如果是统计计算器，转入handleSpecialFunction（）
+            
+        }else if(label.equals(SPECIAL_FUNTION[0])||label.equals(SPECIAL_FUNTION[1])||    //如果是统计计算器，转入handleSpecialFunction（）
         		label.equals(SPECIAL_FUNTION[2])||label.equals(SPECIAL_FUNTION[3])||
         		label.equals(SPECIAL_FUNTION[4])||label.equals(SPECIAL_FUNTION[5])||
-        		label.equals(SPECIAL_FUNTION[6])||label.equals(SPECIAL_FUNTION[7])){
-        	handleSpecialFunction(label);
-        }else if(label.equals(SUPPLEMENT[0])||label.equals(SUPPLEMENT[1])||  //如果是拓展计算计算器，转入handleSupplement（）
-        		label.equals(SUPPLEMENT[2])){
+        	    label.equals(SPECIAL_FUNTION[6])||label.equals(SPECIAL_FUNTION[7])){
+        	if(label.equals(SPECIAL_FUNTION[0])){
+     		    resultText.setText("请分别输入n,m，并以”,“隔开                   C ( "); 
+
+        	}else if(label.equals(SPECIAL_FUNTION[1])){
+     		    resultText.setText("请分别输入n,m，并以”,“隔开                   A ( "); 
+
+        	}else{
+     		    resultText.setText("请输入相应数据，并以”,“隔开                   "+label + "( "); 
+        	}
+        	isSpecialFunction = true;	
+        	opreator = label;
+        	
+        }else if(label.equals("BMI")||label.equals("BFR")||  //如果是拓展计算计算器，转入handleSupplement（）
+        		label.equals("$")||label.equals("寿命")){
         	handleSupplement(label);
         	
         }else{
@@ -1350,7 +1590,17 @@ public class Calculator2 extends JFrame implements ActionListener {
         	}else if(label.equals("x^y")){
         		baseNum = getNumberFromText();
         		resultText.setText(resultText.getText()+"^( ");
-        	}else{
+        	}else if(label.equals("log")){
+        		//baseNum = getNumberFromText();
+        		
+        		resultText.setText("请分别输入底数和自变量/真数  并以”，“隔开           "+"log"+"(   ");
+        	}
+//        	else if(label.equals("e")){
+//            	resultText.setText(resultText.getText()+label);
+//        	}else if(label.equals("π")){
+//            	resultText.setText(resultText.getText()+label);
+//        	}
+        	else{
         		resultText.setText(label+"( ");
         	}
         	
@@ -1358,7 +1608,7 @@ public class Calculator2 extends JFrame implements ActionListener {
         	opreator = label;
         }
     }  
-  
+
     /*处理Backspace键被按下的事件 */  
     private void handleBackspace() {  
         String text = resultText.getText();  
@@ -1375,21 +1625,26 @@ public class Calculator2 extends JFrame implements ActionListener {
             }  
         }  
     } 
-    /* 处理C键被按下的事件 */  
+
+
+   /* 处理C键被按下的事件 */  
     private void handleC() {  
-        // 初始化计算器的各种值  
+    	 // 初始化计算器的各种值  
         resultText.setText(""); 
         isFunction = false;   
+        isSpecialFunction = false;   
 	    opreator = "";
+        baseNum = 1;    
+	    expression = "";
+	    numStack.clear();
+	    postfixStack.clear();
+	    opStack.clear();
         
     }
+    
     /*****************************************************************************************************************/
-    /**
-     * 简单型———按照给定的表达式计算
-     * @param expression 要计算的表达式例如:5+12*(3+5)/7
-     * @return
-     */
-    public double calculate(String expression) {
+    
+   public double calculate(String expression) {
         Stack<String> resultStack  = new Stack<String>();
         prepare(expression);
         Collections.reverse(postfixStack);//将后缀式栈反转
@@ -1404,23 +1659,30 @@ public class Calculator2 extends JFrame implements ActionListener {
                  String tempResult  = calculate(firstValue, secondValue, currentValue.charAt(0));
                  resultStack.push(tempResult);
             }
+
         }
         return Double.valueOf(resultStack.pop());
     }
     /*
      * 数据准备阶段将表达式转换成为后缀式栈   @param expression
-     */
+     */ 
     private void prepare(String expression) {
         opStack.push(',');//运算符放入栈底元素逗号，此符号优先级最低
         char[] arr  = expression.toCharArray();
         int currentIndex  = 0;//当前字符的位置
-        int count = 0;//上次算术运算符到本次算术运算符的字符的长度便于或者之间的数值
-        char currentOp  ,peekOp;//当前操作符和栈顶操作符
+        int count = 0;//上次算术运算符到本次算术运算符的字符的长度便于获得之间的数值
+        char currentOp = 'o'  ,peekOp;//当前操作符和栈顶操作符
         for(int i=0;i<arr.length;i++) {
             currentOp = arr[i];
             if(isOperator(currentOp)) {//如果当前字符是运算符
                 if(count > 0) {
-                    postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+                	if(count==1&&arr[currentIndex] =='e'){//如果操作数是 e，则将其转换成相应数值再推进栈中
+                		postfixStack.push(String.valueOf(Math.E));	
+                	}else if(count==1&&arr[currentIndex]=='π'){//如果操作是π ，则将其转换成相应数值再推进栈中
+                		postfixStack.push(String.valueOf(Math.PI));	
+                	}else{
+                        postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+                	} 
                 }
                 peekOp = opStack.peek();
                 if(currentOp == ')') {//遇到反括号则将运算符栈中的元素移除到后缀式栈中直到遇到左括号
@@ -1442,7 +1704,13 @@ public class Calculator2 extends JFrame implements ActionListener {
             }
         }
         if(count > 1 || (count == 1 && !isOperator(arr[currentIndex]))) {//最后一个字符不是括号或者其他运算符的则加入后缀式栈中
-            postfixStack.push(new String(arr,currentIndex,count));
+        	if(currentOp =='e'){//如果操作数是 e，则将其转换成相应数值再推进栈中
+        		postfixStack.push(String.valueOf(Math.E));	
+        	}else if(currentOp=='π'){//如果操作是π ，则将其转换成相应数值再推进栈中
+        		postfixStack.push(String.valueOf(Math.PI));	
+        	}else{
+                postfixStack.push(new String(arr,currentIndex,count));//取两个运算符之间的数字
+        	}        
         } 
         
         while(opStack.peek() != ',') {
@@ -1465,7 +1733,7 @@ public class Calculator2 extends JFrame implements ActionListener {
      * @return
      */
     public  boolean compare(char cur,char peek) {// 如果是peek优先级高于cur，返回true，默认都是peek优先级要低
-        boolean result  = false;
+    	boolean result  = false;
         if(operatPriority[(peek)-40] >= operatPriority[(cur) - 40]) {
            result = true;
         }
@@ -1480,8 +1748,12 @@ public class Calculator2 extends JFrame implements ActionListener {
      * @return
      */
     private String calculate(String firstValue,String secondValue,char currentOp) {
-    	double fV = Double.valueOf(firstValue).doubleValue();
-    	double sV = Double.valueOf(secondValue).doubleValue();
+    
+    	double fV =0.0;
+    	double sV =0.0;
+
+        fV = Double.valueOf(firstValue).doubleValue();
+        sV = Double.valueOf(secondValue).doubleValue();
         String result  = "";
         switch(currentOp) {
             case '+':
@@ -1499,24 +1771,18 @@ public class Calculator2 extends JFrame implements ActionListener {
         }
         return result;
     }
+
     /**********************************************************************************************/
     
     /******************************************************************************************************************/
+  
     /** 
      *科学型———— 处理科学计算运算符键被按下的事件 
+     * @param key 点击的命令
      */  
     private void handleFunction(String key) { 
     	double resultNum = 0;  
-        if (key.equals("x!")) {  
-            // 阶乘运算  
-        	try{
-        		int num = Integer.parseInt(resultText.getText());
-        		resultNum = factorial(num);
-        	}catch(NumberFormatException e2){
-       		 	resultText.setText("请输入整数");
-        	} 
-        	
-        }else if(key.equals("1/x")){
+        if (key.equals(FUNCTION[0])) {  
         	//计算一个数的倒数
         	if(getNumberFromText()==0){   //判断要计算的数是否为零
         		resultText.setText("0没有倒数！");
@@ -1524,58 +1790,79 @@ public class Calculator2 extends JFrame implements ActionListener {
         		resultNum = 1/getNumberFromText();
         	}
         	
-        	
-        }else if(key.equals("x^2")){
+        }else if(key.equals(FUNCTION[1])){
         	//计算一个数的平方
         	resultNum = getNumberFromText()*getNumberFromText();
-        }else if (key.equals("%")){
-        	//取百分号运算
-        	resultNum = getNumberFromText()/100;  
+           
+        }else if(key.equals(FUNCTION[2])){
+        	//计算x的y次方 
+        	resultNum = calculate(expression);
+        	resultNum = Math.pow(baseNum,resultNum);
+        }
+        else if(key.equals(FUNCTION[3])){
+        	 // 阶乘运算  
+        	try{
+        		int num = Integer.parseInt(resultText.getText());
+        		resultNum = factorial(num);
+        	}catch(NumberFormatException e2){
+       		 	resultText.setText("请输入整数");
+        	} 
         	
-        }else if (key.equals("√")) {  
-            // 平方根运算  
+        }else if (key.equals(FUNCTION[4])){
+        	// 三角函数sin()
+        	resultNum = calculate(expression);
+        	resultNum = Math.sin(resultNum);
+        	
+        }else if (key.equals(FUNCTION[5])) {  
+        	 // 三角函数cos() 
+        	resultNum = calculate(expression);
+        	resultNum = Math.cos(resultNum); 
+        	
+        }else if (key.equals(FUNCTION[6])){
+        	 //三角函数tan()
+        	resultNum = calculate(expression);
+            resultNum = Math.tan(resultNum);
+        	
+        }else if (key.equals(FUNCTION[7])) {  
+        	// 平方根运算  
         	resultNum = calculate(expression);
         	if(resultNum<=0){
         		resultText.setText("you entered must be positive number");
             }else{
             	resultNum = Math.sqrt(resultNum);      	    	
         	}
-        	
-        }else if (key.equals("x^y")){
-        	//计算x的y次方 
+                	
+        }else if (key.equals(FUNCTION[8])) {  
+        	//计算自然对数
         	resultNum = calculate(expression);
-        	resultNum = Math.pow(baseNum,resultNum);
-        	
-        }else if (key.equals("sin")) {  
-            // 三角函数sin()
+        	resultNum = In(resultNum);
+        
+        }else if (key.equals(FUNCTION[9])) {  
+        	//计算以10为底的对数
         	resultNum = calculate(expression);
-        	resultNum = Math.sin(resultNum);
-        	
-        }else if (key.equals("cos")) {  
-            // 三角函数cos() 
-        	resultNum = calculate(expression);
-        	resultNum = Math.cos(resultNum); 
-        	 
-        }else if (key.equals("tan")) {  
-            //三角函数tan()
-        	resultNum = calculate(expression);
-            resultNum = Math.tan(resultNum); 
+        	resultNum = Log(10,resultNum);
+        }else if (key.equals(FUNCTION[10])) {  
+        	//计算以任意为底的函数
+        	getNumToken(expression);
+        	resultNum = Double.valueOf(numStack.pop()).doubleValue();
+        	baseNum = Double.valueOf(numStack.pop()).doubleValue();
+        	resultNum =Log(baseNum,resultNum);
+
             
-        }else if (key.equals("e^x")){
+        }else if (key.equals(FUNCTION[11])){
+        	//取百分号运算
+        	resultNum = getNumberFromText()/100;  
+        	
+        }else if (key.equals(FUNCTION[12])){
         	//计算自然常数e的x次方
         	resultNum = calculate(expression);
        	    resultNum = Math.exp(resultNum);//显示有点问题
-       	    
-        }else if (key.equals("In")){
-        	//计算自然对数
-        	resultNum = calculate(expression);
-        	resultNum = In(resultNum);//计算错误
         	
-        }else if (key.equals("e")){
+        }else if (key.equals(FUNCTION[13])){
        	 //计算自然常数e
        	 resultNum = Math.E;//显示有待改进
        	 
-       }else if (key.equals("π")){
+       }else if (key.equals(FUNCTION[14])){
        	 //计算圆周率 π
        	 resultNum = Math.PI;//显示有点问题
        	 
@@ -1587,7 +1874,10 @@ public class Calculator2 extends JFrame implements ActionListener {
     
     }  
     
-    /*计算阶乘*/
+    /** 
+     *计算阶乘的方法
+     * @param x 
+     */  
     private double factorial(int x) {
     	if(x==0){
     		return(1);
@@ -1595,9 +1885,9 @@ public class Calculator2 extends JFrame implements ActionListener {
     		 
     	    String style="0.0";
     	    DecimalFormat df = new DecimalFormat();  
-    	    style = "0.00000E000";  
+    	    style = "0.0";  
     	    BigDecimal num=new BigDecimal(String.valueOf(x));//构造BigDecimal时指定有效精度s
-            for(int i = 1; i <= x; i++){  
+            for(int i = 1; i < x; i++){  
                 String temp1 = Integer.toString(i);  
                 BigDecimal temp2 = new  BigDecimal(temp1);  
                 num = num.multiply(temp2);  
@@ -1607,7 +1897,10 @@ public class Calculator2 extends JFrame implements ActionListener {
     	}
    }
  
-   /*计算自然对数 In*/
+    /** 
+     *计算以E为底的对数
+     * @param x  真数
+     */  
    private double In(double x){
     	
     	if(x<=0){
@@ -1619,53 +1912,96 @@ public class Calculator2 extends JFrame implements ActionListener {
     	}
     	
    }
+   
+   /** 
+    *计算以任意数为底的对数
+    * @param x,y 底数，真数
+    */  
+   private double Log(double x,double y){
+    	
+    	if(x<=0||y<=0){
+    		resultText.setText("you entered must be positive number");
+    		return 0;
+        }else{
+	    	double log = Math.log(y)/Math.log(x);
+	    	return (log);
+    	}
+    	
+   }
    /***********************************************************************************************/
   
   
    /************************************************************************************************/
+   
    /**
     * 统计型————实现统计计算器的功能
     * */
    private  void handleSpecialFunction(String label){
+	   
+	   String resultNum = "";  
+	   int n,m,k;
+	   float p;
+
+	   getNumToken(expression);
+	   
 	   if(label.equals(SPECIAL_FUNTION[0])){//计算组合数
-		   resultText.setText("请输入n和m，并以”/“隔开                  C( "); 
+	       m = Integer.valueOf(numStack.pop());
+	       n = Integer.valueOf(numStack.pop());
+	       resultNum =String.valueOf(Combination(n,m));
+		   
 	   }else if(label.equals(SPECIAL_FUNTION[1])){//计算排列数
-		   resultText.setText("请输入n和m，并以”/“隔开                  A( "); 
+	       m = Integer.valueOf(numStack.pop());
+	       n = Integer.valueOf(numStack.pop());
+	       resultNum =String.valueOf(Arrangement(n,m));
 
 	   }else if(label.equals(SPECIAL_FUNTION[2])){//计算方差
+		   resultNum = String.valueOf(Variance());
 		   
 	   }else if(label.equals(SPECIAL_FUNTION[3])){//计算平均值
-		   
+		   resultNum = String.valueOf(Ave());
 	   }else if(label.equals(SPECIAL_FUNTION[4])){//计算二项分布
-	   
+		   resultNum = String.valueOf(BiDistribution());
 	   }else if(label.equals(SPECIAL_FUNTION[5])){//计算泊松分布
-		   
+		   resultNum = String.valueOf(PoDistribution());
 	   }else if(label.equals(SPECIAL_FUNTION[6])){//计算标准正太分布
 		   StandardDistribution(resultText.getText());
-	   }else if(label.equals(SPECIAL_FUNTION[7])){//计算卡方分布
+	   }else if(label.equals(SPECIAL_FUNTION[7])){//计算离散系数
+		   resultNum = String.valueOf(Discrete_index());
+	   }else{
 		   
 	   }
+	   resultText.setText(resultText.getText()+" ) = "+String.valueOf(resultNum));//输出计算结果
+
+   }    
+   /** 
+    * 计算组合公式 函数
+    * @param n,m
+    * @return 
+    */  
+  
+   private int Combination(int n,int m){
 	   
-   } 
-   /*计算组合公式*/
-   private int C(int x,int y){
-   	
-	   	if(x<=0||y<=0){
+	   if(n<=0||m<=0){
 	   		resultText.setText("your enter must be positive number");
 	   		return 0;
 	    }else{
-		    if(x>y){
+		    if(m>n){
 		  	    resultText.setText("x must be smaller than or equal to y");
 		  		return 0;
 		  	}else{
-			   	int c = (int)(factorial(y)/(factorial(x)*factorial(y-x)));
+			   	int c = (int)(factorial(n)/(factorial(m)*factorial(n-m)));
 			   	return (c);
 			}
 	    }
-   	
-   }
-   /*计算排列公式*/
-   private int A(int m,int n){
+  	
+  }
+
+   /** 
+    * 计算排列公式 函数
+    * @param n,m
+    * @return 
+    */  
+   private int Arrangement(int n,int m){
   		
     	if(n<=0||m<=0){
     		resultText.setText("your enter must be positive number");
@@ -1675,106 +2011,92 @@ public class Calculator2 extends JFrame implements ActionListener {
 	   		  resultText.setText("m must be smaller than or equal to n");
 	   		  return 0;
 	   	    }else{
-	    	  int a = (int)(factorial(n)/factorial(n-m));
+	    	  int a =(int) (factorial(n)/factorial(n-m));
 	    	  return (a);
 	        }
      }
    }
-   /*计算平均值*/
-   private double Ave(int order[]){
-  	int l = order.length;
-  	int total=0,k=0;
-  	 for(int i=0;i<l;i++){
-  		 total += order[i]; 
-  		 k++;
-  	 }
-  	double a =(double)total/k;
-  	return a;
-  	
-  }
-   /*计算方差*/
-   private double D(int s[]){
-   	int l = s.length;
-   	double average=Ave(s);
-   	int total=0,k=0;
-   	 for(int i=0;i<l;i++){
-   		 total += (s[i]-average)*(s[i]-average); 
-   		 k++;
-   	 }
-   	double S =(double)total/k;
-   	return S;
-   	
-   }
-   /***********************************************************************************************/
-   /***********************************************************************************************/
-   /**
-    * 拓展型————处理拓展部分事件
-    * */
    
-   private void handleSupplement(String label){
-	   double weight,height,waistLine;
-	   int    age;
-	   
-	   weight = Double.valueOf(weightText.getText()); //从输入框中获得体重
-	   height = Double.valueOf(heightText.getText());//从输入框中获得身高
-	   
-	   if(label.equals(SUPPLEMENT[0])){
-		   BMI(weight,height);
-	   }else if(label.equals(SUPPLEMENT[1])){
-		   waistLine = Double.valueOf(waistText.getText());
-		   age = Integer.valueOf(ageText.getText());
-		   BFR(weight,height,waistLine,age);   
-	   }else{
-		   
-	   }
-   }
+   /** 
+    * 计算均值函数
+    * @param order[] double类型的数组
+    * @return 
+    */  
    
-   /**
-    * 计算体重函数
-    * @param weight，height   
-    */
+   private double Ave(){
+	   double result=0,opNum = 0.0;
+	  	 int numStackLen = numStack.size();
+	  	 Stack<String> numstack  = (Stack<String>)numStack.clone();
+	  	 for(int i=0;i<numStackLen;i++){
+	   		 opNum =Double.valueOf(numstack.pop()) ;
+	  		 result += opNum;
+	  	 }
+	  	result = result/numStackLen;
+	  	return result;
+	  }
    
-   private void BMI(double weight,double height){
-	    
-	    if(height>3||height<0){
-	    	resultText.setText("请注意身高的单位为米");
-	    }else{
-	   	    double bmi=weight/(height*height);
+   /** 
+    * 计算方差函数
+    * @return 
+    */  
+   private double Variance(){
+	   double result=0,opNum = 0.0;
+	   	 int    numStackLen = numStack.size();
+	  	 Stack<String> numstack  = (Stack<String>)numStack.clone();
+	   	 double average=Ave();
 	   	
-	   	    if(bmi<19){
-	   		resultText.setText(bmi+"Underweight");
-	   	    }else if(bmi>=19&&bmi<25){
-	   		resultText.setText(bmi+"Normalweight");
-	   	    }else if(bmi>=25&&bmi<30){
-	   		resultText.setText(bmi+"Overweight");
-	   	    }else if(bmi>=30&&bmi<39){
-	   		resultText.setText(bmi+"Obese");
-	   	    }else{
-	   		resultText.setText(bmi+"Morbidly Obese");
-	   	    }
-	    }
+	   	 for(int i=0;i<numStackLen;i++){
+	   		 opNum =Double.valueOf(numstack.pop());
+	   		result += (opNum-average)*(opNum-average); 
+	   	 }
+	   	result =result/numStackLen;
+	   	return result;
+	   	
+
+
    }
    
-   /*计算身体脂肪率*/
-   private  void BFR(double weight,double height,double waistline,int age){
-	   double bfr;
-    	if((c.getSelectedCheckbox())==cRadio1){//女生计算公式    //缺省
-    		double a=waistline*0.74;
-    		double b=weight*0.082+34.89;
-    		 bfr=(a-b)/weight;
-    	}else{//男生计算公式
-    		double a=waistline*0.74;
-    		double b=weight*0.082+44.74;
-    	    bfr=(a-b)/weight;
-    		
-    	}	
-    	resultText.setText(bfr+"");
-    }
-   
-   
-   /***********************************************************************************************/
-   
    /**
+    * 求二项分布的值
+    * @param n,p,k   实验n次，每次发生概率为p，发生次数为K
+    */
+   private double BiDistribution(){
+	   int n,k;
+	   double P;
+	   Stack<String> numstack  = (Stack<String>)numStack.clone();
+	   k=Integer.valueOf(numstack.pop());
+	   P=Double.valueOf(numstack.pop());
+	   n=Integer.valueOf(numstack.pop());
+	   System.out.println(n);
+	   P=Combination(n,k)*(Math.pow(P,k))*(Math.pow(1-P,(n-k)));
+	   return P;
+	
+   }
+   /**
+    * 求泊松分布的值
+    * @param λ,k   每次发生概率为λ，发生次数为K
+    */
+   private double PoDistribution(){
+	   int k;
+	   float λ;
+	   double p;
+	   Stack<String> numstack  = (Stack<String>)numStack.clone();
+	   k=Integer.valueOf(numstack.pop());
+	   λ=Float.valueOf(numstack.pop());
+	   p=(Math.pow(λ,k)*Math.pow(Math.E,-λ))/factorial(k);
+	   return p;
+	
+}
+   /**
+    * 求离散系数
+    */
+   private double Discrete_index(){ 
+	   double index;
+	   index=Math.sqrt(Variance())/Ave();
+	   return  index;
+   }
+   /**
+    * 标准正太分布函数
     * 根据分割积分法来求得积分值
     * -3.89～3.89区间外的积分面积 小于 0.0001，
     * 所以确定有效的积分区间为-3.89～3.89
@@ -1811,73 +2133,78 @@ public class Calculator2 extends JFrame implements ActionListener {
        ret = (float) a;
        return ret;
    }
-   /**
-    * 求二项分布的值
-    * @param n,p,k   实验n次，每次发生概率为p，发生次数为K
-    */
-   private void BiDistribution(int n,float p,int k){
-	   int c=C(k,n);
-	   double P;
-	   P=c*(Math.pow(p,k))*(Math.pow(1-p,(n-k)));
-	   resultText.setText(P+"");
-	
-   }
-   /**
-    * 求泊松分布的值
-    * @param λ,k   每次发生概率为λ，发生次数为K
-    */
-   private void PoDistribution(float λ,int k){
-	   double p;
-	   p=(Math.pow(λ,k)*Math.pow(Math.E,-λ))/factorial(k);
-	
-}
-   /**
-    * 伽玛函数
-    * @param α  
-    */
-   private void Gamma(float α){
-	   double χ2,x=1;//x未解决，有问题
-	   double h = Math.abs(Integer.MAX_VALUE - Integer.MIN_VALUE) /Integer.MAX_VALUE ;
-	   double sum = 0;
-		  for (double xi = Integer.MIN_VALUE; xi <= Integer.MAX_VALUE; xi = xi + h) {
-		   sum += fx(α,1/2,x) * h;
-		  }
-   }
-   /**
-    * 伽玛函数中的密度函数, 取其x的定积分
-    * @param α ,x 
-    */
+   
   
-	 public static double f(double x,float α) {
-	  double f;
-	  f =Math.pow(x,α-1)*Math.pow(Math.E,-x);
-	  return f;
-	 }
-	 /**
-	    * 伽玛分布中的密度函数, 取其x的定积分
-	    * @param α ,x 
-	 */
-	 public static double fx(float α,float λ,double x) {
-		 double f;
-		 f=(Math.pow(λ,α)*Math.pow(x,α-1)*Math.pow(Math.E, - λ*x))/getDefiniteIntegralByRectangle2(0,Double.MAX_VALUE,α);;
-		 return f;
-	 }
-	 
+   
+   /***********************************************************************************************/
    /**
-    * 伽玛函数
-    * @param α  
+    * 拓展型————处理拓展部分事件
+    * */
+   
+   private void handleSupplement(String label){
+	   double weight,height,waistLine;
+	   int    age;
+	   
+	   weight = Double.valueOf(weightText.getText()); //从输入框中获得体重
+	   height = Double.valueOf(heightText.getText());//从输入框中获得身高
+	   
+	   if(label.equals(SUPPLEMENT[0])){//计算体重指数
+		   BMI(weight,height);
+	   }else if(label.equals(SUPPLEMENT[1])){//计算体质率
+		   waistLine = Double.valueOf(waistText.getText());
+		   age = Integer.valueOf(ageText.getText());
+		   BFR(weight,height,waistLine,age);   
+	   }else{
+		   
+	   }
+   }
+   
+   /**
+    * 计算体重函数
+    * @param weight，height   体重，身高
     */
-   public static double getDefiniteIntegralByRectangle2(double x0, double xn,float α) {
-	      // 0~1区间若干等分
-		  int n = Integer.MAX_VALUE;
-		  double h = Math.abs(xn - x0) / n;
-		  double sum = 0;
-		  for (double xi = 0; xi <= xn; xi = xi + h) {
-		   sum += f(xi,α) * h;
-		  }
-		  return sum;
-		 }
-
+   
+   private void BMI(double weight,double height){
+	    
+	    if(height>3||height<0){
+	    	resultText.setText("请注意身高的单位为米");
+	    }else{
+	   	    double bmi=weight/(height*height);
+	   	
+	   	    if(bmi<19){
+	   		resultText.setText(bmi+"Underweight");
+	   	    }else if(bmi>=19&&bmi<25){
+	   		resultText.setText(bmi+"Normalweight");
+	   	    }else if(bmi>=25&&bmi<30){
+	   		resultText.setText(bmi+"Overweight");
+	   	    }else if(bmi>=30&&bmi<39){
+	   		resultText.setText(bmi+"Obese");
+	   	    }else{
+	   		resultText.setText(bmi+"Morbidly Obese");
+	   	    }
+	    }
+   }
+   
+   /**
+    * 计算体重函数
+    * @param weight，height,waistLine,age   体重，身高，腰围，年龄
+    */
+   private  void BFR(double weight,double height,double waistline,int age){
+	   double bfr;
+    	if((c.getSelectedCheckbox())==cRadio1){//女生计算公式    //缺省
+    		double a=waistline*0.74;
+    		double b=weight*0.082+34.89;
+    		 bfr=(a-b)/weight;
+    	}else{//男生计算公式
+    		double a=waistline*0.74;
+    		double b=weight*0.082+44.74;
+    	    bfr=(a-b)/weight;
+    		
+    	}	
+    	resultText.setText(bfr+"");
+    }
+   
+ 
    /** 
     * 从结果文本框中获取数字 
     *  
@@ -1890,6 +2217,36 @@ public class Calculator2 extends JFrame implements ActionListener {
        } catch (NumberFormatException e) {  
        }          return result;  
    }
+   
+   /**
+    * 从输入表达式中获取数字
+    * 
+    */
+    private void getNumToken(String expression){
+    	char[] arr  = expression.toCharArray();
+    	int arrLen = arr.length;
+        int currentIndex  = 0;//当前字符的位置
+        int count = 0;//上次逗号到本次逗号的字符的长度,便于获得之间的数值
+        
+        for(int i=0 ;i<arrLen;i++) {
+            if("0123456789.".indexOf(arr[i])>= 0) {
+                count++;
+
+            } else {//如果当前字符是非数字的字符
+            	if(count>0){
+                    numStack.push(new String(arr,currentIndex,count));//取两个字符之间的数字
+            	}
+                count = 0;
+                currentIndex = i+1;
+            }
+        }
+        if(count > 1 || (count == 1 && "0123456789.".indexOf(arr[currentIndex])>= 0)) {//最后一个字符不是括号或者其他运算符的则加入数字栈中
+            numStack.push(new String(arr,currentIndex,count));
+        } 
+    }
+   
+
+   
    
   /********主类，创建一个Calculator2对象****************************************************************************************************/
     public static void main(String args[]) {  
@@ -1918,5 +2275,5 @@ class MyFocusListener implements FocusListener {
             jtf.setText(info); 
         } 
    }
+>>>>>>> origin/master
 }
->>>>>>> f08b0858e193222036a43b3153774a9b8fe921ee
