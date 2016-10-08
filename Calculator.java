@@ -11,16 +11,14 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;  
 import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
-
-import org.pushingpixels.substance.api.SubstanceLookAndFeel;
-import org.pushingpixels.substance.api.painter.border.StandardBorderPainter;
-import org.pushingpixels.substance.api.shaper.ClassicButtonShaper;
-import org.pushingpixels.substance.api.skin.EmeraldDuskSkin;
-import org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel;
-import org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyleContext;
 
 import java.math.BigDecimal; //引入大数类 
 import java.util.Collections;
@@ -46,15 +44,15 @@ public class Calculator extends JFrame implements ActionListener {
     private final String[] MODEL = {"简单型","科学型","统计型","健康工具"};
     /*基础计算器上的键的显示名字 */  
     private final String[] KEYS = {"(",")", "C","←","7", "8", "9", "+" , "4", "5", "6",  
-            "-", "1", "2", "3", "*", "0", ".", "=", "," }; 
+            "-", "1", "2", "3", "*", "0", ".", "=", "/" }; 
     /*科学型计算器上的函数图标显示名称*/ 
     private final String[] FUNCTION = { "1/x", "χ2", "x^y", "x!", "sin","cos","tan","√" ,
     		"In","lg","log","%","e^x","e","π",","};
     /*统计型计算器上特殊功能图标显示名称*/
-    private final String[] SPECIAL_FUNTION = { "C(N,M)", "A(N,M)","D", "Ave","二项分布",
-    		"泊松分布","标准正太分布","离散系数"};
+    private final String[] SPECIAL_FUNTION = { "排列", "组合","D", "Ave","B",
+    		"P(λ)","Φ","σ"};
     /*健康管理计算器上的键的显示名称*/
-    private final String[] SUPPLEMENT={"男","女","确定"};
+    private final String[] SUPPLEMENT={"男","女","确定","Back"};
     /*汇率转换模块上的键的显示名称*/
     private final String[] REFRESH={"刷新"};
  
@@ -124,7 +122,7 @@ public class Calculator extends JFrame implements ActionListener {
     int age,sex;
     //weight，height为了记录健康管理中的身高，体重
 	double weight,height;
-	//体重指数显示中的各个label
+	//体重指数显示中的各个label以及返回按钮
 	JLabel shapeLabel,idealLabel,bmiLabel, rateLabel,bfrLabel,
 	       baseLabel,needLabel,onLabel,loseLabel,attentionLabel;
 	//小数格式化保留两位小数
@@ -145,7 +143,7 @@ public class Calculator extends JFrame implements ActionListener {
         // 不许修改计算器的大小  
         this.setResizable(false);             //注意：如果大小可以改变 
         // 使计算器中各组件大小合适  
-        this.setSize(420, 600); 
+        this.setSize(400, 600); 
         this.setBackground(Color.BLACK);
         this.getContentPane().setBackground(Color.red);
         this.getContentPane().setVisible(true);
@@ -163,9 +161,10 @@ public class Calculator extends JFrame implements ActionListener {
         resultText.setEditable(true);            //允许改变现实框
         // 设置文本框背景颜色为白色  
         resultText.setBackground(Color.white);
+        resultText.setBorder(new EmptyBorder(5,5,5,10));
         //设置文本框的宽度
-        resultText.setSize(100,100);
-        resultText.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        resultText.setSize(100,200);
+        resultText.setFont(new Font("微软雅黑", Font.PLAIN, 20));
         resultText.setForeground(new Color(139,126,102 )); 
         /*为文本框初始化*/
         heightText.setText(info1);
@@ -192,14 +191,20 @@ public class Calculator extends JFrame implements ActionListener {
         FlowLayout fl = new FlowLayout(); 
         fl.setAlignment(FlowLayout.LEFT); 
         modelPanel.setLayout(fl);
-        modelPanel.setBackground(new Color(255,181,197 ));
+        modelPanel.setBackground(new Color(39,42,47 ));
         for (int i = 0; i < modelLen; i++) {  
-            models[i] = new RaButton(MODEL[i]);  
-            modelPanel.add(models[i]); 
-            //设置modelPanle和button的背景颜色
+            models[i] = new JButton(MODEL[i]);  
+          //去掉modelsPanel里面的button的边界线
+            models[i].setBorderPainted(false);
+            //去掉button点击时字体上出现的边界框
+            models[i].setFocusPainted(false);
+            //设置button里面字体的大小
             models[i].setFont(new Font("微软雅黑", Font.PLAIN, 18));
-            models[i].setBackground(new Color(255,181,197 ));  
-            models[i].setContentAreaFilled(false);
+            models[i].setBackground(new Color(39,42,47 ));
+            models[i].setForeground(Color.white);
+            //models[i].setContentAreaFilled(false);//透明
+            modelPanel.add(models[i]); 
+
         }  
         
        // 建立一个画板放文本框  
@@ -216,7 +221,9 @@ public class Calculator extends JFrame implements ActionListener {
        // 初始化基本计算器上数字、运算、括号、清除等键的按钮，将键放在一个名叫calkeysPanel画板内  
        JPanel calckeysPanel = new JPanel();  
        // 用网格布局器，4行，4列的网格，网格之间的水平方向间隔为3个象素，垂直方向间隔为3个象素  
-       calckeysPanel.setLayout(new GridLayout(5, 4, 15, 15));  
+       calckeysPanel.setLayout(new GridLayout(5, 4, 15, 15)); 
+       calckeysPanel.setBackground(Color.black);
+
        for (int i = 0; i < keysLen; i++) {  
             keys[i] = new RaButton(KEYS[i]);  
             calckeysPanel.add(keys[i]);  
@@ -228,12 +235,15 @@ public class Calculator extends JFrame implements ActionListener {
         // 画板采用边界布局管理器，画板里组件之间的水平和垂直方向上间隔都为0象素  
         panel1.setLayout(new BorderLayout(0,0));   
         panel1.setBackground(new Color(54,54,54   ));
+        JLabel space=new JLabel();
+        panel1.add("North",space);
         panel1.add("Center", calckeysPanel);
         
         // 初始化科学计算器函数功能键，将 基本函数功能和科学计算器功能键放在一个画板内  
         JPanel functionsPanel = new JPanel();  
         // 用网格布局管理器，5行，7列的网格，网格之间的水平方向间隔为0个象素，垂直方向间隔为0个象素  
         functionsPanel.setLayout(new GridLayout(9, 4,15,5));
+        functionsPanel.setBackground(Color.black);
         //加入一些科学运算的按钮
         for (int i = 0; i < functionLen; i++) {  
             function[i] = new RaButton(FUNCTION[i]);   
@@ -254,7 +264,8 @@ public class Calculator extends JFrame implements ActionListener {
         // 初始化计算器特殊函数功能键，用红色标示，将基本函数功能键放在一个画板内  
         JPanel special_functionsPanel = new JPanel();  
         // 用网格布局管理器，6行，4列的网格，网格之间的水平方向间隔为0个象素，垂直方向间隔为0个象素  
-        special_functionsPanel.setLayout(new GridLayout(7, 4, 15, 10)); 
+        special_functionsPanel.setLayout(new GridLayout(7, 4, 10, 10)); 
+        special_functionsPanel.setBackground(Color.black);
         //加入统计运算的功能按钮
         for (int i = 0; i < special_functionLen; i++) {  
         	special_function[i] = new RaButton(SPECIAL_FUNTION[i]);   
@@ -271,25 +282,18 @@ public class Calculator extends JFrame implements ActionListener {
         panel3.setBackground(new Color(54,54,54   ));
         panel3.add("Center",special_functionsPanel);
         
-        //初始化计算器扩展模式，将扩展功能的函数放在一个panel上
-        //labeltop放在顶部
-        ImageIcon icon = new ImageIcon(getClass().getResource("BMI.jpg"));
-        icon.setImage(icon.getImage().getScaledInstance(500,170,Image.SCALE_DEFAULT));
-        labeltop=new JLabel(icon,JLabel.CENTER);
-        //labelpanel放头部
-        JPanel labelpanel=new JPanel();
-        labelpanel.setLayout(new FlowLayout());
-        labelpanel.add(labeltop);
-        
+        //初始化计算器扩展模式，将扩展功能的函数放在一个panel上        
         //sexPanel存放性别
         JPanel sexPanel=new JPanel();
         sexPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
         label1=new JLabel("请输入性别");
         label1.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        label1.setForeground(new Color(0,0,0)); 
+        label1.setForeground(Color.white); 
         sexPanel.add(label1);
+        sexPanel.setBackground(new 	Color(39,42,47 ));
         JPanel sex=new JPanel();
         sex.setLayout(new GridLayout(1,2,10,0));
+        sex.setBackground(new 	Color(39,42,47 ));
         for (int i = 0; i < 2; i++) {  
         	supplements[i] = new RaButton(SUPPLEMENT[i]); 
             //设置button里面字体大小
@@ -300,9 +304,10 @@ public class Calculator extends JFrame implements ActionListener {
         //agePanel存放年龄
         JPanel agePanel=new JPanel();
         agePanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
+        agePanel.setBackground(new 	Color(39,42,47 ));
         label2=new JLabel("请输入年龄");
         label2.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        label2.setForeground(new Color(0,0,0)); 
+        label2.setForeground(Color.white); 
         agePanel.add(label2);
         ageText.setBorder(new EmptyBorder(5,5,5,10));
         agePanel.add(ageText);
@@ -310,9 +315,10 @@ public class Calculator extends JFrame implements ActionListener {
         //heightPanel存放身高
         JPanel heightPanel=new JPanel();
         heightPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
+        heightPanel.setBackground(new Color(39,42,47 ));
         label3=new JLabel("请输入身高");
         label3.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        label3.setForeground(new Color(0,0,0)); 
+        label3.setForeground(Color.white); 
         heightPanel.add(label3);
         heightText.setBorder(new EmptyBorder(5,5,5,10));
         heightPanel.add(heightText);
@@ -320,19 +326,21 @@ public class Calculator extends JFrame implements ActionListener {
         //weightPanel存放体重
         JPanel weightPanel=new JPanel();
         weightPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
+        weightPanel.setBackground(new Color(39,42,47 ));
         label4=new JLabel("请输入体重");
         label4.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        label4.setForeground(new Color(0,0,0)); 
+        label4.setForeground(Color.white); 
         weightPanel.add(label4);
         weightText.setBorder(new EmptyBorder(5,5,5,10));
         weightPanel.add(weightText);
         
         //sportPanel存放运动强度
         JPanel sportPanel=new JPanel();
+        sportPanel.setBackground(new Color(39,42,47 ));
         sportPanel.setLayout(new FlowLayout(FlowLayout.CENTER,20,10));
         label5=new JLabel("请选择运动程度");
         label5.setFont(new Font("微软雅黑", Font.PLAIN, 14));
-        label5.setForeground(new Color(0,0,0)); 
+        label5.setForeground(Color.white);  
         sportPanel.add(label5);
         //下拉框
         NAMES= new String[5];
@@ -349,15 +357,10 @@ public class Calculator extends JFrame implements ActionListener {
         
         //submitPanel存放确认键
         JPanel submitPanel=new JPanel();
+        submitPanel.setBackground(new 	Color(39,42,47 ));
         submitPanel.setLayout(new FlowLayout());
-        supplements[2] = new JButton(SUPPLEMENT[2]); 
-        //去掉button点击时字体上出现的边界框
-        supplements[2].setFocusPainted(false);
-        //设置button里面字体大小
-        supplements[2].setFont(new Font("微软雅黑", Font.PLAIN, 16));
-        supplements[2].setBackground(new Color(250,128,114 ));  
-        submitPanel.add(supplements[2]);  
-        supplements[2].setForeground(new Color(255,250,250));  
+        supplements[2] = new RaButton(SUPPLEMENT[2]); 
+        submitPanel.add(supplements[2]);
          
         //新建一个大画板Panel4,BMI-体脂率计算
         JPanel panel_4=new JPanel();
@@ -370,11 +373,11 @@ public class Calculator extends JFrame implements ActionListener {
         panel_4.add(submitPanel);
         panel4=new JPanel();
         panel4.setLayout(new BorderLayout());
-        panel4.add("North",labelpanel);
-        panel4.add("South",panel_4);
+        panel4.add("Center",panel_4);
         
         //新建一个resultPanel,现实BMI等健康计算结果
         resultPanel=new JPanel();
+      
         //实例化各个结果label
         shapeLabel =new JLabel("",JLabel.CENTER);
         idealLabel=new JLabel("",JLabel.CENTER);
@@ -386,7 +389,31 @@ public class Calculator extends JFrame implements ActionListener {
         onLabel=new JLabel("",JLabel.CENTER);
         loseLabel=new JLabel("",JLabel.CENTER);
         attentionLabel=new JLabel("",JLabel.CENTER);
-        resultPanel.setLayout(new GridLayout(10,1));
+        shapeLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        shapeLabel.setForeground(Color.WHITE);
+        idealLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        idealLabel.setForeground(Color.WHITE);
+        bmiLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        bmiLabel.setForeground(Color.WHITE);
+        rateLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        rateLabel.setForeground(Color.WHITE);
+        bfrLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        bfrLabel.setForeground(Color.WHITE); 
+        baseLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        baseLabel.setForeground(Color.WHITE); 
+        needLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        needLabel.setForeground(Color.WHITE); 
+        onLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        onLabel.setForeground(Color.WHITE); 
+        loseLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        loseLabel.setForeground(Color.WHITE); 
+        attentionLabel.setFont(new Font("微软雅黑", Font.PLAIN, 14));
+        attentionLabel.setForeground(Color.WHITE);
+        
+        supplements[3] = new RaButton(SUPPLEMENT[3]); 
+
+        resultPanel.setLayout(new GridLayout(11,1));
+        resultPanel.setBackground(new Color(39,42,47 ));
         resultPanel.add(shapeLabel);
         resultPanel.add(idealLabel);
         resultPanel.add(bmiLabel);
@@ -397,7 +424,7 @@ public class Calculator extends JFrame implements ActionListener {
         resultPanel.add(onLabel);
         resultPanel.add(loseLabel);
         resultPanel.add(attentionLabel);
-      
+        resultPanel.add(supplements[3]);
         /***************为各按钮添加事件侦听器***********************************/   
         //都使用同一个事件侦听器，即本对象。本类的声明中有implements ActionListener
         for (int i = 0; i < modelLen; i++) {  
@@ -460,22 +487,17 @@ public class Calculator extends JFrame implements ActionListener {
         	resultPanel.setVisible(false);
         	handleC();     
         }else if(label.equals(MODEL[3])){//健康管理
-        		panel.add("Center",panel4);
-             	panel1.setVisible(false);
-          	    panel2.setVisible(false);
-          	    panel3.setVisible(false);
-          	    panel4.setVisible(true);
-          	    resultPanel.setVisible(false);
+        	heightText.setText(info1);
+        	weightText.setText(info2);
+        	ageText.setText(info4);
+        	panel.add("Center",panel4);
+           	panel1.setVisible(false);
+            panel2.setVisible(false);
+      	    panel3.setVisible(false);
+      	    panel4.setVisible(true); 
+      	    resultPanel.setVisible(false);
           	    handleC();   
-        	
-        }else if(label.equals(MODEL[4])){//汇率转换
-        	panel.add("Center",panel5);
-        	panel1.setVisible(false);
-        	panel2.setVisible(false);
-        	panel3.setVisible(false);
-        	panel4.setVisible(false);
-        	resultPanel.setVisible(false);
-        	handleC();     
+        	    
         }else if (label.equals("=")) {  // 用户按了"="键  ,输入结束，计算结果
         	if(isFunction){
         		handleFunction(opreator);
@@ -534,16 +556,17 @@ public class Calculator extends JFrame implements ActionListener {
         	String input;//判断输入是否完全
         	input=HandelNum();
         	if(input=="输入完成"){
+
                 shapeLabel.setText(BMIInform());
                 idealLabel.setText("理想体重:"+String.valueOf(DBW())+"公斤");
                 bmiLabel.setText("BMI(身体质量指数):"+String.valueOf(BMI()));
                 rateLabel.setText("疾病发病危险性:"+DiseaseRate());
-                bfrLabel.setText("体脂率:"+String.valueOf(BFR()));
+                bfrLabel.setText("体脂率:"+String.valueOf(BFR())+"%");
                 baseLabel.setText("基础代谢率:"+String.valueOf(BMR())+"卡路里/天");
                 needLabel.setText("每天需要热量:"+String.valueOf(dailyCalorie())+"卡路里");
                 onLabel.setText("如需增重:"+PutOn()+"卡路里/天");
                 loseLabel.setText("如需减肥:"+LoseWeight()+"卡路里/天");
-                attentionLabel.setText(BFRInform());
+                attentionLabel.setText("你体内的脂肪量"+BFRInform());
 
         	    panel.add("Center",resultPanel);
         	    resultPanel.setVisible(true);
@@ -551,10 +574,23 @@ public class Calculator extends JFrame implements ActionListener {
       	        panel2.setVisible(false);
       	        panel3.setVisible(false);
       	        panel4.setVisible(false);
+      	       
       	        handleC();
       	    }else{
       	    	resultText.setText("请先完成输入");
       	    }
+        	
+        }else if(label.equals(SUPPLEMENT[3])){
+        	heightText.setText(info1);
+        	weightText.setText(info2);
+        	ageText.setText(info4);
+        	panel.add("Center",panel4);
+         	panel1.setVisible(false);
+      	    panel2.setVisible(false);
+      	    panel3.setVisible(false);
+      	    panel4.setVisible(true);
+      	    resultPanel.setVisible(false);
+      	    handleC();   
         	
         }else{
         	if(label.equals("e^x")){
@@ -1232,17 +1268,17 @@ public class Calculator extends JFrame implements ActionListener {
 	   bfr=BFR();
        if(sex==1){//男生
 		   if(bfr<10){
-			   return("您体内的脂肪过少");
+			   return("过少");
 		   }else if(bfr>=10&&bfr<=13){
-			   return("必要脂肪");
+			   return("仅仅能满足必要需求");
 		   }else if(bfr>=14&&bfr<=20){
-			   return("您体内的脂肪量达到了运动员的要求");
+			   return("达到了运动员的要求");
 		   }else if(bfr>=21&&bfr<=24){
-			   return("您体内的脂肪含量正好合适,请继续保持 ");
+			   return("正好合适,请继续保持 ");
 		   }else if(bfr>=25&&bfr<=31){
-			   return("您体内的脂肪量有点偏高，不过尚可接受");
+			   return("有点偏高，不过尚可接受");
 		   }else{
-			   return("您体内的脂肪量过高，加强运动吧");
+			   return("过高，加强运动吧");
 		   }
 	   }else{
 		   if(bfr<2){
@@ -1304,7 +1340,7 @@ public class Calculator extends JFrame implements ActionListener {
         } 
     }
    
-   
+
   /********主类，创建一个Calculator对象****************************************************************************************************/
     public static void main(String args[]) {  
         Calculator calculator = new Calculator(); 
@@ -1336,19 +1372,19 @@ class MyFocusListener implements FocusListener {
 //实现button的圆角
 class RaButton extends JButton {
     private static final long serialVersionUID = 39082560987930759L;
-    public  final Color BUTTON_COLOR1 = new Color(250,128,114);
-    public  final Color BUTTON_COLOR2 = new Color(250,128,114);
+    public  final Color BUTTON_COLOR1 = new Color(59,71,86);
+    public  final Color BUTTON_COLOR2 = new Color(59,71,86);
     
-    public  final Color BUTTON_FOREGROUND_COLOR = Color.BLACK;
+    public  final Color BUTTON_FOREGROUND_COLOR = Color.WHITE;
     private boolean hover;
 
     public RaButton(String name) {
         this.setText(name);
         setFont(new Font("system", Font.PLAIN, 20));
         setBorderPainted(false);
-        setForeground(BUTTON_FOREGROUND_COLOR);
+        setForeground(BUTTON_FOREGROUND_COLOR);//前景颜色，字体颜色
         setFocusPainted(false);
-        setContentAreaFilled(false);
+        setContentAreaFilled(false);//透明
         addMouseListener(new MouseAdapter() {
           //  @Override
             public void mouseEntered(MouseEvent e) {
