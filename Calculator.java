@@ -542,15 +542,15 @@ public class Calculator extends JFrame implements ActionListener {
         	input=HandelNum();
         	if(input=="输入完成"){//输出结果
                 shapeLabel.setText(BMIInform());
-                idealLabel.setText("理想体重:"+String.valueOf(DBW())+"公斤");
-                bmiLabel.setText("BMI(身体质量指数):"+String.valueOf(BMI()));
+                idealLabel.setText("理想体重:"+DBW()+"公斤");
+                bmiLabel.setText("BMI(身体质量指数):"+BMI());
                 rateLabel.setText("疾病发病危险性:"+DiseaseRate());
-                bfrLabel.setText("体脂率:"+String.valueOf(BFR())+"%");
-                baseLabel.setText("基础代谢率:"+String.valueOf(BMR())+"卡路里/天");
-                needLabel.setText("每天需要热量:"+String.valueOf(dailyCalorie())+"卡路里");
+                bfrLabel.setText("体脂率:"+BFR()+"%");
+                baseLabel.setText("基础代谢率:"+BMR()+"卡路里/天");
+                needLabel.setText("每天需要热量:"+dailyCalorie()+"卡路里");
                 onLabel.setText("如需增重:"+PutOn()+"卡路里/天");
                 loseLabel.setText("如需减肥:"+LoseWeight()+"卡路里/天");
-                attentionLabel.setText("你体内的脂肪量"+BFRInform());
+                attentionLabel.setText("您体内的脂肪量"+BFRInform());
                 
                 supplements[0].setForeground(Color.white);
    		        supplements[1].setForeground(Color.white);
@@ -637,9 +637,13 @@ public class Calculator extends JFrame implements ActionListener {
     
     /*处理" = "被按下的事件*/
     private void handleEqual() {
-        // 承接最终计算结果  
-     	double result = 0.0;
+        
+    	double result = 0.0;// 承接最终计算结果 
     	if(isFunction){
+        	if((expression.charAt(expression.length()-1))!=')'){
+        		expression = expression + ")";
+        	}
+
     		handleFunction(opreator);
     	    isFunction = false;   //是否是科学计算，如sin,cos,lg等
     	    opreator = "";
@@ -660,7 +664,6 @@ public class Calculator extends JFrame implements ActionListener {
     	}
     	
     }
-    
     /*****************************************************************************************************************/
     /**
      * 简单型———按照给定的表达式计算
@@ -822,16 +825,16 @@ public class Calculator extends JFrame implements ActionListener {
             resultText.setText(getNumberFromText()+"^(2) = "+resultNum);
            
         }else if(key.equals(FUNCTION[2])){
-        	//计算x的y次方 
+        	//计算x的y次方
         	resultNum = calculate(expression);
         	resultNum = Math.pow(baseNum,resultNum);
-        	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(getNumberFromText()+" = "+resultNum);
+        	 resultNum=Double.valueOf(df.format(resultNum));
+             resultText.setText(resultText.getText()+" = "+resultNum);
         }else if(key.equals(FUNCTION[3])){
-        	//阶乘运算  
+        	  //阶乘运算  
         	try{
         		double num = Double.valueOf(resultText.getText());
-        		resultText.setText(String.valueOf(num)+"!="+factorial0(num));
+        		resultText.setText(num+"!= "+factorial0(num));
               	}catch(NumberFormatException e2){
        		 	resultText.setText("请输入整数");
         	} 
@@ -841,21 +844,20 @@ public class Calculator extends JFrame implements ActionListener {
         	resultNum = calculate(expression);
         	resultNum = Math.sin(resultNum);
         	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
+            resultText.setText(resultText.getText()+" = "+resultNum);
         	
         }else if (key.equals(FUNCTION[5])) {  
-        	// 三角函数cos() 
+        	 // 三角函数cos() 
         	resultNum = calculate(expression);
         	resultNum = Math.cos(resultNum);
         	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
-        	
+            resultText.setText(resultText.getText()+" = "+resultNum);        	
         }else if (key.equals(FUNCTION[6])){
-        	//三角函数tan()
+        	 //三角函数tan()
         	resultNum = calculate(expression);
             resultNum = Math.tan(resultNum);
             resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
+            resultText.setText(resultText.getText()+" = "+resultNum);        	
         	
         }else if (key.equals(FUNCTION[7])) {  
         	// 平方根运算  
@@ -865,48 +867,50 @@ public class Calculator extends JFrame implements ActionListener {
             }else{
             	resultNum = Math.sqrt(resultNum); 
             	resultNum=Double.valueOf(df.format(resultNum));
-                resultText.setText(String.valueOf(resultNum));
+                resultText.setText(resultText.getText()+" = "+resultNum);        	
         	}
                 	
         }else if (key.equals(FUNCTION[8])) {  
-            	//计算自然对数
-            resultNum = calculate(expression);
-            resultNum = Double.valueOf(Log(Math.E,resultNum));
-           	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(resultText.getText()+" = "+resultNum);               	
+        	//计算自然对数
+        	resultNum = calculate(expression);
+        	resultNum = Double.valueOf(Log(Math.E,resultNum));
+        	resultNum=Double.valueOf(df.format(resultNum));
+            resultText.setText(resultText.getText()+" = "+resultNum);        	
         
         }else if (key.equals(FUNCTION[9])) {  
         	//计算以10为底的对数
         	resultNum = calculate(expression);
-        	resultNum = Log(10,resultNum);
+        	resultNum =Double.valueOf(Log(10,resultNum));
         	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(resultText.getText()+" = "+resultNum); 
+            resultText.setText(resultText.getText()+" = "+resultNum);        	
         }else if (key.equals(FUNCTION[10])) {  
         	//计算以任意为底的函数
         	getNumToken(expression);
         	resultNum = Double.valueOf(numStack.pop()).doubleValue();
         	baseNum = Double.valueOf(numStack.pop()).doubleValue();
-        	resultNum =Log(baseNum,resultNum);
-        	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
-            
+            try {  
+            	resultNum =Double.valueOf(Log(baseNum,resultNum));
+            	resultNum=Double.valueOf(df.format(resultNum));
+                resultText.setText(resultText.getText()+" = "+resultNum);    
+            } catch (NumberFormatException e) { 
+                resultText.setText(Log(baseNum,resultNum));    
+
+            }  
+        	    	        
         }else if (key.equals(FUNCTION[11])){
         	//取百分号运算
         	resultNum = getNumberFromText()/100;  
         	resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
+            resultText.setText(resultText.getText()+"% = "+resultNum);        	
         	
         }else if (key.equals(FUNCTION[12])){
         	//计算自然常数e的x次方
         	resultNum = calculate(expression);
        	    resultNum = Math.exp(resultNum);//显示有点问题
        	    resultNum=Double.valueOf(df.format(resultNum));
-            resultText.setText(String.valueOf(resultNum));
+            resultText.setText(resultText.getText()+" = "+resultNum);        	
         	
         }
-
- 
-    
     }  
     
     /*
@@ -957,18 +961,23 @@ public class Calculator extends JFrame implements ActionListener {
     	}
    }
  
-   /** 
-    *计算以任意数为底的对数
-    * @param x,y 底数，真数
-    */
-   private double Log(double x,double y){
-    	
-    	if(x<=0||y<=0||y==1){
-    		resultText.setText("");
-    		return 0;
-        }else{
+    /** 
+     *计算以任意数为底的对数
+     * @param x,y 底数，真数
+     */
+   private String Log(double x,double y){
+    	if(x<=0){
+    		return "底数需为正数";
+    	}
+    	if(y<=0){
+    		return "真数需为正数";
+        }
+    	if(x==1){
+    		return "底数不能为1";
+        }
+    	else{
 	    	double log = Math.log(y)/Math.log(x);
-	    	return (log);
+	    	return String.valueOf(log);
     	}
     	
    }
@@ -986,28 +995,73 @@ public class Calculator extends JFrame implements ActionListener {
 	   getNumToken(expression);
 	   
 	   if(label.equals(SPECIAL_FUNTION[0])){//计算组合数
-	       m = Integer.valueOf(numStack.pop());
+		   m = Integer.valueOf(numStack.pop());
 	       n = Integer.valueOf(numStack.pop());
-	       resultNum =String.valueOf(Combination(n,m));
-	       resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
+	       resultNum =Combination(n,m);
+	       try {  
+	    	   int resultC = Integer.valueOf(resultNum);
+			   //输出计算结果
+		   	   if((expression.charAt(expression.length()-1))!=')'){
+		   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+		       }else{
+		           resultText.setText(resultText.getText()+"  = "+resultNum);
+		       }    
+           } catch (NumberFormatException e) { 
+               resultText.setText(resultNum);    
+
+           }
 		   
 	   }else if(label.equals(SPECIAL_FUNTION[1])){//计算排列数
-	       m = Integer.valueOf(numStack.pop());
+		   m = Integer.valueOf(numStack.pop());
 	       n = Integer.valueOf(numStack.pop());
-	       resultNum =String.valueOf(Arrangement(n,m));
-	       resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
+	       resultNum =Arrangement(n,m);
+	       try {  
+	    	   int resultA = Integer.valueOf(resultNum);
+			   //输出计算结果
+		   	   if((expression.charAt(expression.length()-1))!=')'){
+		   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+		       }else{
+		           resultText.setText(resultText.getText()+"  = "+resultNum);
+		       }    
+           } catch (NumberFormatException e) { 
+               resultText.setText(resultNum);    
 
+           } 
 	   }else if(label.equals(SPECIAL_FUNTION[2])){//计算方差
-		   resultNum = String.valueOf(Variance());
-		   resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
+		   resultNum = df.format(Variance());
+			 //输出计算结果
+	   	   if((expression.charAt(expression.length()-1))!=')'){
+	   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+	       }else{
+	           resultText.setText(resultText.getText()+"  = "+resultNum);
+	       }
 		   
+	   }else if(label.equals(SPECIAL_FUNTION[3])){//计算平均值
+		   resultNum = df.format(Ave());
+			 //输出计算结果
+	   	   if((expression.charAt(expression.length()-1))!=')'){
+	   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+	       }else{
+	           resultText.setText(resultText.getText()+"  = "+resultNum);
+	       }
+
 	   }else if(label.equals(SPECIAL_FUNTION[4])){//计算二项分布
-		   resultNum = String.valueOf(BiDistribution());
-		   resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
+		   resultNum = dfs.format(BiDistribution());
+			 //输出计算结果
+	   	   if((expression.charAt(expression.length()-1))!=')'){
+	   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+	       }else{
+	           resultText.setText(resultText.getText()+"  = "+resultNum);
+	       }
 	   }else if(label.equals(SPECIAL_FUNTION[5])){//计算泊松分布
 		   //结果保留三位小数
 		   resultNum = dfp.format(PoDistribution());
-		   resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
+           //输出计算结果
+	   	   if((expression.charAt(expression.length()-1))!=')'){
+	   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+	       }else{
+	           resultText.setText(resultText.getText()+"  = "+resultNum);
+	       }
 	   }else if(label.equals(SPECIAL_FUNTION[6])){//计算标准正太分布
 		   double result;
 		   result=StandardDistribution();
@@ -1017,8 +1071,12 @@ public class Calculator extends JFrame implements ActionListener {
 			   resultText.setText("积分上限太大");
 		   }else{
 			   resultNum=dfs.format(result);   
-			   resultText.setText(resultText.getText()+"  = "+resultNum);//输出计算结果
-		   }
+			 //输出计算结果
+		   	   if((expression.charAt(expression.length()-1))!=')'){
+		   	       resultText.setText(resultText.getText()+")  = "+resultNum);//用户没有按")"，输出时使其自动补上
+		       }else{
+		           resultText.setText(resultText.getText()+"  = "+resultNum);
+		       }		   }
 	   }
 	   
        
@@ -1030,18 +1088,16 @@ public class Calculator extends JFrame implements ActionListener {
     * @return 
     */  
   
-   private int Combination(int n,int m){
+   private String Combination(int n,int m){
 	   
 	   if(n<=0||m<=0){
-	   		resultText.setText("your enter must be positive number");
-	   		return 0;
+	   		return "n,m需为正数";
 	    }else{
 		    if(m>n){
-		  	    resultText.setText("x must be smaller than or equal to y");
-		  		return 0;
+		  		return "n必须大于或等于m";
 		  	}else{
 			   	int c = (int)(factorial(n)/(factorial(m)*factorial(n-m)));
-			   	return (c);
+			   	return (String.valueOf(c));
 			}
 	    }
   	
@@ -1052,18 +1108,16 @@ public class Calculator extends JFrame implements ActionListener {
     * @param n,m
     * @return 
     */  
-   private int Arrangement(int n,int m){
+   private String Arrangement(int n,int m){
   		
     	if(n<=0||m<=0){
-    		resultText.setText("your enter must be positive number");
-    		return 0;
+	   		return "n,m需为正数";
         }else{
 	   	    if(m>n){
-	   		  resultText.setText("m must be smaller than or equal to n");
-	   		  return 0;
+		  		return "n必须大于或等于m";
 	   	    }else{
 	    	  int a =(int) (factorial(n)/factorial(n-m));
-	    	  return (a);
+	    	  return (String.valueOf(a));
 	        }
      }
    }
@@ -1115,7 +1169,7 @@ public class Calculator extends JFrame implements ActionListener {
 	   P=Double.valueOf(numstack.pop());
 	   n=Integer.valueOf(numstack.pop());
 	   System.out.println(n);
-	   P=Combination(n,k)*(Math.pow(P,k))*(Math.pow(1-P,(n-k)));
+	   P=(factorial(n)/(factorial(k)*factorial(n-k)))*(Math.pow(P,k))*(Math.pow(1-P,(n-k)));
 	   return P;
 	
    }
@@ -1180,19 +1234,7 @@ public class Calculator extends JFrame implements ActionListener {
    }
    /***********************************************************************************************/
    /***********************************************************************************************/
-   /**
-    * 拓展型————处理拓展部分事件
-    * */
    
-   private void handleSupplement(String label){
-
-	   if(label.equals("BMI")){
-		   BMI();
-	   }else if(label.equals("BFR")){
-		   BFR();
-  
-	   }
-   }
    /*健康指数显示前的数据处理*/
    private  String HandelNum(){
        try {  
@@ -1333,11 +1375,11 @@ public class Calculator extends JFrame implements ActionListener {
        if(sex==1){//男生
 		   if(bfr<10){
 			   return("过少");
-		   }else if(bfr>=10&&bfr<=13){
+		   }else if(bfr>=10&&bfr<14){
 			   return("仅仅能满足必要需求");
-		   }else if(bfr>=14&&bfr<=20){
+		   }else if(bfr>=14&&bfr<21){
 			   return("达到了运动员的要求");
-		   }else if(bfr>=21&&bfr<=24){
+		   }else if(bfr>=21&&bfr<25){
 			   return("正好合适,请继续保持 ");
 		   }else if(bfr>=25&&bfr<=31){
 			   return("有点偏高，不过尚可接受");
@@ -1347,11 +1389,11 @@ public class Calculator extends JFrame implements ActionListener {
 	   }else{
 		   if(bfr<2){
 			   return("过少");
-		   }else if(bfr>=2&&bfr<=5){
+		   }else if(bfr>=2&&bfr<6){
 			   return("仅仅能满足必要需求");
-		   }else if(bfr>=6&&bfr<=13){
+		   }else if(bfr>=6&&bfr<14){
 			   return("达到了运动员的要求");
-		   }else if(bfr>=14&&bfr<=17){
+		   }else if(bfr>=14&&bfr<18){
 			   return("正好合适,请继续保持");
 		   }else if(bfr>=18&&bfr<=25){
 			   return("有点偏高，不过尚可接受");
